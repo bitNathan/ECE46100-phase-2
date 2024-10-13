@@ -12,5 +12,5 @@
     "types": ["jest", "node"],
     "sourceMap": true
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"]
+  "include": ["src/**/*.ts", "src/tests/**/*.ts"]
 }

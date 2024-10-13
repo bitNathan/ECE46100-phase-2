@@ -4,34 +4,45 @@
 case "$1" in
     # Install dependencies
     "install")
-        echo "Installing dependencies..."
-        npm install
-        if [ $? -eq 0 ]; then
-            exit 0
-        else
+        npm_out=$(npm install 2>&1)
+        if [ $? -ne 0 ]; then
             echo "Error installing dependencies."
             exit 1
         fi
+
+        # regex to find the number of packages installed successfully
+        num_dependencies=$(echo "$npm_out" | grep -oE 'added [0-9]+' | awk '{print $2}')
+
+        if [ -n "$num_dependencies" ]; then
+            echo "$num_dependencies dependencies installed..."
+        else
+            echo "Dependencies are fully up to date"
+        fi
+
+        exit 0
         ;;
 
     # Run tests
     "test")
-        echo "Running test suite..."
+        # compile and build the project
+        npm run -s build
+
+        # run tests
         npm test
         if [ $? -eq 0 ]; then
-            echo "All tests passed successfully."
             exit 0
         else
-            echo "Tests failed."
             exit 1
         fi
         ;;
 
     # Default: Analyze the URLs provided in the URL_FILEPATH
     *)
+        # compile and build the project
+        npm run -s build
+
         if [ -f "$1" ]; then
             URL_FILE=$1
-            #echo "Analyzing repositories from $URL_FILE..."
 
             while IFS= read -r repoUrl; do
                 # Call the CLI tool to analyze each repository and output NDJSON format
@@ -43,7 +54,7 @@ case "$1" in
                 tail -n 1 analysis_output.ndjson
                 exit 0
             else
-                echo "Error during analysis."
+                #echo "Error during analysis."
                 exit 1
             fi
         else

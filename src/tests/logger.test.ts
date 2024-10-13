@@ -1,5 +1,5 @@
-import logger from '../src/logger';
-import config from '../src/config_env';
+import logger from '../logger';
+import config from '../config_env';
 import fs from 'fs';
 import path from 'path';
 
