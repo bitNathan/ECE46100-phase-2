@@ -4,14 +4,22 @@
 case "$1" in
     # Install dependencies
     "install")
-        echo "Installing dependencies..."
-        npm install
-        if [ $? -eq 0 ]; then
-            exit 0
-        else
+        npm_out=$(npm install 2>&1)
+        if [ $? -ne 0 ]; then
             echo "Error installing dependencies."
             exit 1
         fi
+
+        # regex to find the number of packages installed successfully
+        num_dependencies=$(echo "$npm_out" | grep -oE 'added [0-9]+' | awk '{print $2}')
+
+        if [ -n "$num_dependencies" ]; then
+            echo "$num_dependencies dependencies installed..."
+        else
+            echo "Dependencies are fully up to date"
+        fi
+
+        exit 0
         ;;
 
     # Run tests
