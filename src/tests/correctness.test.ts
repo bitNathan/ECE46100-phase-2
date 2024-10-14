@@ -1,6 +1,6 @@
-import { graphqlRequest } from '../src/graphql_request';
-import logger from '../src/logger';
-import { getCorrectness } from '../src/correctness'; 
+import { graphqlRequest } from '../graphql_request';
+import logger from '../logger';
+import { getCorrectness } from '../correctness'; 
 
 // 3 test cases
 

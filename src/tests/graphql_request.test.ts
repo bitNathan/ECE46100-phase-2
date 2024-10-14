@@ -1,4 +1,4 @@
-import { graphqlRequest } from '../src/graphql_request';
+import { graphqlRequest } from '../graphql_request';
 
 // 4 test cases
 

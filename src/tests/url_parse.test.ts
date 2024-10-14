@@ -1,4 +1,4 @@
-import { parseURL } from '../src/url_parse'; // Adjust the import path as necessary
+import { parseURL } from '../url_parse'; // Adjust the import path as necessary
 
 // 5 test cases
 
