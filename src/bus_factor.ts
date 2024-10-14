@@ -83,7 +83,7 @@ export async function getBusFactor(owner: string, repoName: string): Promise<num
     return [score, elapsed_time];
 }
 
-getBusFactor("expressjs", "express");
-getBusFactor("cloudinary", "cloudinary_npm");
-getBusFactor("lodash", "lodash");
-getBusFactor("nullivex", "nodist");
+//getBusFactor("expressjs", "express");
+//getBusFactor("cloudinary", "cloudinary_npm");
+//getBusFactor("lodash", "lodash");
+//getBusFactor("nullivex", "nodist");

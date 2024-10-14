@@ -78,8 +78,8 @@ export async function getCorrectness(owner: string, repoName: string): Promise<n
     return [score, elapsed_time];
 }
 
-getCorrectness("expressjs", "express");
-getCorrectness("cloudinary", "cloudinary_npm");
-getCorrectness("lodash", "lodash");
-getCorrectness("nullivex", "nodist");
-getCorrectness("kevastator", "461-acme-service");
+//getCorrectness("expressjs", "express");
+//getCorrectness("cloudinary", "cloudinary_npm");
+//getCorrectness("lodash", "lodash");
+//getCorrectness("nullivex", "nodist");
+//getCorrectness("kevastator", "461-acme-service");

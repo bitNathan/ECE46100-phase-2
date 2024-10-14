@@ -43,18 +43,14 @@ case "$1" in
 
         if [ -f "$1" ]; then
             URL_FILE=$1
-
-            while IFS= read -r repoUrl; do
-                # Call the CLI tool to analyze each repository and output NDJSON format
-                node ./dist/cli.js analyze "$repoUrl" >> analysis_output.ndjson
-            done < "$URL_FILE"
-
+     
+            # Call the CLI tool to analyze each repository and output NDJSON format
+            node ./dist/cli.js analyze "$URL_FILE" | tee analysis_output.ndjson
+ 
             if [ $? -eq 0 ]; then
-                #echo "Analysis completed successfully."
-                tail -n 1 analysis_output.ndjson
                 exit 0
             else
-                #echo "Error during analysis."
+                echo "Error during analysis."
                 exit 1
             fi
         else
