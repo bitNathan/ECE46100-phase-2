@@ -28,7 +28,7 @@ interface HalsteadMetrics {
 // Function to clone a GitHub repository into a directory
 export function cloneGitHubRepo(url: string, targetDir: string): void {
     // Clone the repository into the target directory with depth 1 to only get the latest commit
-    execSync(`git clone --depth 1 ${url} ${targetDir}`, { stdio: 'inherit' });
+    execSync(`git clone --quiet --depth 1 ${url} ${targetDir}`, { stdio: 'inherit' });
 }
 
 // Function to delete a directory recursively
@@ -167,6 +167,7 @@ export function calculateTotalTimeFromRepo(gitHubUrl: string): [number, number] 
         const latency = (endTime - startTime) / 1000; // Calculate latency in seconds
 
         // Step 5: Return the result based on totalTime and latency
+        logger.infoDebug(`Ramp-Up Calculation completed in ${latency.toFixed(3)}s`);
         if (totalTime > time_max) {
             return [0, latency];
         } else {
@@ -174,8 +175,8 @@ export function calculateTotalTimeFromRepo(gitHubUrl: string): [number, number] 
         }
 
     } catch (error) {
-        logger.infoDebug('An error occurred!');
+        logger.infoDebug(`An error occurred during Ramp-Up: ${error}`);
         deleteDirectoryRecursive(targetDir);  // Ensure cleanup even if an error occurs
-        throw error;
+        return [0, (performance.now() - startTime) / 1000];
     }
 }

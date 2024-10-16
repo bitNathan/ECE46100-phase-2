@@ -43,7 +43,7 @@ export async function getLicense(owner: string, repoName: string): Promise<numbe
         {
             var elapsed_time:number = (new Date().getTime() - start) / 1000;
 
-            logger.debug(`No README for alternative license could be found on the web for ${owner}/${repoName}!`);
+            logger.infoDebug(`No README for alternative license could be found on the web for ${owner}/${repoName}!`);
 
             return [score, elapsed_time];
         }
@@ -76,7 +76,7 @@ export async function getLicense(owner: string, repoName: string): Promise<numbe
     return [score, elapsed_time];
 }
 
-getLicense("expressjs", "express");
-getLicense("cloudinary", "cloudinary_npm");
-getLicense("lodash", "lodash");
-getLicense("nullivex", "nodist");
+//getLicense("expressjs", "express");
+//getLicense("cloudinary", "cloudinary_npm");
+//getLicense("lodash", "lodash");
+//getLicense("nullivex", "nodist");

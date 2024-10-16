@@ -46,7 +46,7 @@ export async function getResponsive(owner: string, repoName: string): Promise<nu
 
     // lower limit
     if (!edges || edges.length < 2 || totalIssuesOrPRs === 0) {
-        logger.debug("Not enough commit data or no issues/PRs to calculate average time between commits");
+        logger.infoDebug("Responsive Maintainer: Not enough commit data or no issues/PRs to calculate average time between commits");
         return [0, 0];  // Return 0 if there's not enough data
     }
 
@@ -79,6 +79,7 @@ export async function getResponsive(owner: string, repoName: string): Promise<nu
     // Check if avg hours is greater than 100
     // upper limit
     if (avgTimeBetweenCommitsInHours > 100) {
+        logger.infoDebug(`Responsive Maintainer: Average time between commits is too high: ${avgTimeBetweenCommitsInHours.toFixed(2)} hours`);
         return [0, 0];
     }
 
