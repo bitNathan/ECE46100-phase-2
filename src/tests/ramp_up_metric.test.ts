@@ -135,9 +135,9 @@ describe('Ramp Up Metric', () => {
             throw new Error('Clone failed');
         });
 
-        // Call the function and expect an error
-        expect(() => {
-            calculateTotalTimeFromRepo(testUrl);
-        }).toThrow('Clone failed');
+
+        const [result,] = calculateTotalTimeFromRepo(testUrl);
+        expect(result).toBe(0); // Indicating failure
+
     });
 });

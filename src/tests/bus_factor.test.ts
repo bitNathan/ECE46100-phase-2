@@ -5,8 +5,8 @@ import { getBusFactor } from '../bus_factor';
 // 3 test cases
 
 // Mock the dependencies
-jest.mock('../src/graphql_request');
-jest.mock('../src/logger');
+jest.mock('../graphql_request');
+jest.mock('../logger');
 
 describe('getBusFactor', () => {
     const owner = 'testOwner';
