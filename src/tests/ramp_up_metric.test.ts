@@ -27,7 +27,7 @@ describe('Ramp Up Metric', () => {
         cloneGitHubRepo(testUrl, testDir);
 
         // Assert that execSync was called with the correct command
-        expect(execSync).toHaveBeenCalledWith(`git clone --depth 1 ${testUrl} ${testDir}`, { stdio: 'inherit' });
+        expect(execSync).toHaveBeenCalledWith(`git clone --quiet --depth 1 ${testUrl} ${testDir}`, { stdio: 'inherit' });
     });
 
     // Test for deleting a directory recursively
@@ -85,11 +85,22 @@ describe('Ramp Up Metric', () => {
     });
 
     it('should get all JavaScript files in a directory', () => {
+        const testDir = 'test_repo'; // Your test directory
+    
         // Mock the file system
-        (fs.readdirSync as jest.Mock).mockReturnValue(['file1.js', 'file2.txt', 'folder']); // Simulate directory contents
+        (fs.readdirSync as jest.Mock).mockImplementation((dir) => {
+            if (dir === testDir) {
+                return ['file1.js', 'file2.txt', 'folder']; // Simulate top-level directory contents
+            } else if (dir === path.join(testDir, 'folder')) {
+                return ['file2.txt']; // Simulate contents of 'folder'
+            }
+            return []; // Default case
+        });
+    
         (fs.statSync as jest.Mock).mockImplementation((filePath) => {
+            // Handle the top-level files
             if (filePath === path.join(testDir, 'file1.js')) {
-                return { isDirectory: () => false }; // Simulate a file
+                return { isDirectory: () => false }; // Simulate a JS file
             }
             if (filePath === path.join(testDir, 'file2.txt')) {
                 return { isDirectory: () => false }; // Simulate a non-JS file
@@ -97,13 +108,23 @@ describe('Ramp Up Metric', () => {
             if (filePath === path.join(testDir, 'folder')) {
                 return { isDirectory: () => true }; // Simulate a folder
             }
+            // If you want to ignore JS files in the nested folder:
+            if (filePath === path.join(testDir, 'folder', 'file1.js')) {
+                return { isDirectory: () => false }; // Simulate a JS file in the folder
+            }
+            if (filePath === path.join(testDir, 'folder', 'file2.txt')) {
+                return { isDirectory: () => false }; // Simulate a non-JS file in the folder
+            }
+    
+            // If the filePath doesn't match any known paths, throw an error
+            throw new Error(`Unexpected filePath: ${filePath}`);
         });
     
         // Call the function
         const files = getJavaScriptFiles(testDir);
     
         // Assert that only JavaScript files are returned
-        expect(files).toEqual([path.join(testDir, 'file1.js')]);
+        expect(files).toEqual([path.join(testDir, 'file1.js')]); // Expect only the top-level JS file
     });
 
     // Test for calculating total time from a GitHub repository

@@ -11,7 +11,7 @@ enum VerbosityType
 }
 
 // Custom Logger class
-class Logger {
+export class Logger {
     private firstWrite: boolean;
 
     public constructor() {

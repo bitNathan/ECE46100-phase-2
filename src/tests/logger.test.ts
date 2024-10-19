@@ -1,4 +1,4 @@
-import logger from '../logger';
+import { Logger } from '../logger';
 import config from '../config_env';
 import fs from 'fs';
 import path from 'path';
@@ -9,8 +9,11 @@ import path from 'path';
 jest.mock('fs');
 
 describe('Logger', () => {
+    let logger: Logger;
+
     beforeEach(() => {
-        // Reset the mock implementation before each test
+        logger = new Logger()
+        // Reset all mock functions before each test
         jest.clearAllMocks();
         // Mock the log level and log file path
         config.LOG_LEVEL = 2; // Set to DEBUG level for testing
@@ -32,6 +35,8 @@ describe('Logger', () => {
         // Mock fs.existsSync to return true to simulate directory existing
         (fs.existsSync as jest.Mock).mockReturnValue(true);
         
+        config.LOG_LEVEL = 1; // Set to info mode
+
         // Mock the file write method
         const message = 'Test info message';
         (fs.writeFileSync as jest.Mock).mockImplementation(() => {});
@@ -47,14 +52,17 @@ describe('Logger', () => {
         // Mock fs.existsSync to return true to simulate directory existing
         (fs.existsSync as jest.Mock).mockReturnValue(true);
 
+        config.LOG_LEVEL = 1; // Set to info mode
+
         // Simulate first write completed
         logger.info('Initial write');
-        
+    
         // Mock the file append method
         const message = 'Test debug message';
         (fs.appendFileSync as jest.Mock).mockImplementation(() => {});
 
-        // Call the debug method again
+        config.LOG_LEVEL = 2; // Reset to debug mode
+
         logger.debug(message);
 
         // Assert that appendFileSync was called with the correct parameters

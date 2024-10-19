@@ -4,7 +4,7 @@ import logger from "./logger";
 export async function getLicense(owner: string, repoName: string): Promise<number[]>
 {
     // record the start time
-    var start:number = new Date().getTime();
+    const start = performance.now();
 
     // Graph QL query designed by Peter
     const query = `
@@ -22,13 +22,13 @@ export async function getLicense(owner: string, repoName: string): Promise<numbe
     var response = await graphqlRequest(query);
 
     // returns license key
-    var licenseName: string = response?.data?.repository?.licenseInfo?.key.toUpperCase();
+    var licenseName: string = response?.data?.repository?.licenseInfo?.key?.toUpperCase();
 
     // Assume we fail the test for now
     var score: number = 0;
 
     // Pass Fail Basis includes the MIT license, new BSD, and LGPL-2.1 itself
-    if (licenseName != undefined && (licenseName.includes("MIT") || licenseName.includes("LGPL-2.1") || licenseName.includes("BSD-3-Clause")))
+    if (licenseName != undefined && (licenseName.includes("MIT") || licenseName.includes("LGPL-2.1") || licenseName.includes("BSD-3-CLAUSE")))
     {
         score = 1;
     }
@@ -41,7 +41,7 @@ export async function getLicense(owner: string, repoName: string): Promise<numbe
         // If it is not ok assume it does not exist and return zero and the latency
         if (!responseMd.ok)
         {
-            var elapsed_time:number = (new Date().getTime() - start) / 1000;
+            var elapsed_time:number = (performance.now() - start) / 1000;
 
             logger.infoDebug(`No README for alternative license could be found on the web for ${owner}/${repoName}!`);
 
@@ -69,7 +69,7 @@ export async function getLicense(owner: string, repoName: string): Promise<numbe
     }
 
     // get the elapsed time in seconds (divide by 1000)
-    var elapsed_time:number = (new Date().getTime() - start) / 1000;
+    var elapsed_time:number = (performance.now() - start) / 1000;
 
     logger.infoDebug(`Successfully calculated License Metric of ${score} for ${owner}/${repoName} in ${elapsed_time}s`);
 
