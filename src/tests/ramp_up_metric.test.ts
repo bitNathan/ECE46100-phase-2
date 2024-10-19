@@ -84,24 +84,25 @@ describe('Ramp Up Metric', () => {
         expect(time).toBeGreaterThan(0); // Ensure it's a positive time
     });
 
-    // Test for getting all JavaScript files in a directory
     it('should get all JavaScript files in a directory', () => {
         // Mock the file system
-        (fs.readdirSync as jest.Mock).mockReturnValue(['file1.js', 'file2.txt', 'folder']);
+        (fs.readdirSync as jest.Mock).mockReturnValue(['file1.js', 'file2.txt', 'folder']); // Simulate directory contents
         (fs.statSync as jest.Mock).mockImplementation((filePath) => {
             if (filePath === path.join(testDir, 'file1.js')) {
-                return { isDirectory: () => false };
+                return { isDirectory: () => false }; // Simulate a file
             }
             if (filePath === path.join(testDir, 'file2.txt')) {
-                return { isDirectory: () => false };
+                return { isDirectory: () => false }; // Simulate a non-JS file
             }
-            return { isDirectory: () => true }; // Simulate a folder
+            if (filePath === path.join(testDir, 'folder')) {
+                return { isDirectory: () => true }; // Simulate a folder
+            }
         });
-
+    
         // Call the function
         const files = getJavaScriptFiles(testDir);
-
-        // Assert the result
+    
+        // Assert that only JavaScript files are returned
         expect(files).toEqual([path.join(testDir, 'file1.js')]);
     });
 
@@ -125,7 +126,13 @@ describe('Ramp Up Metric', () => {
         const result = calculateTotalTimeFromRepo(testUrl);
 
         // Assert the result is valid
-        expect(result).toBeLessThan(1); // Assuming time_max is set to 100
+        const [score, latency] = result; // Destructure the array result
+
+        // Assert that the score is less than 1 (assuming time_max is set to 100)
+        expect(score).toBeLessThan(1);
+
+        // Assert that the latency is greater than 0 (ensure the calculation took time)
+        expect(latency).toBeGreaterThan(0);
     });
 
     // Test for handling errors during repository cloning
