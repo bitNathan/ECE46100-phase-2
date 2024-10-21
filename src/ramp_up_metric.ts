@@ -36,7 +36,7 @@ export function deleteDirectoryRecursive(dirPath: string): void {
     if (fs.existsSync(dirPath)) {
         fs.readdirSync(dirPath).forEach((file) => {
             const currentPath = path.join(dirPath, file);
-            if (fs.lstatSync(currentPath).isDirectory()) {
+            if (currentPath && fs.lstatSync(currentPath)?.isDirectory()) {
                 // Recursively delete sub-directories
                 deleteDirectoryRecursive(currentPath);
             } else {

@@ -4,8 +4,8 @@ export async function parseURL(url: string): Promise<string[]>
     let gitIdx: number = splitStr.indexOf("github.com");
 
     if (gitIdx > -1) // We have a github url, easy parsing
-    {
-        return [splitStr[gitIdx + 1], splitStr[gitIdx + 2]]; // return owner and repo name
+    { 
+        return [splitStr[gitIdx + 1] || "", splitStr[gitIdx + 2] || ""]; // return owner and repo name
     }
     else // We have a non github url, so maybe npm?
     {
@@ -22,24 +22,27 @@ export async function parseURL(url: string): Promise<string[]>
             const data = await response.json()
 
             // get the hosting url for the repository
-            repoUrl = data?.repository?.url;
+            repoUrl = data?.repository?.url || "";
 
-            // split the new repo url
-            splitStr = repoUrl.split("/");
+            if (repoUrl) {
 
-            // check if any index of splitStr contains github.com (some cases where there is no perfect github.com)
-            for (let i: number = 0; i < splitStr.length; i++)
-            {
-                if (splitStr[i].includes("github.com"))
+                // split the new repo url
+                splitStr = repoUrl.split("/");
+
+                // check if any index of splitStr contains github.com (some cases where there is no perfect github.com)
+                for (let i: number = 0; i < splitStr.length; i++)
                 {
-                    gitIdx = i;
+                    if (splitStr[i].includes("github.com"))
+                    {
+                        gitIdx = i;
+                    }
                 }
-            }
 
-            // just like a github link check to see if the index exists
-            if (gitIdx > -1) // NPM link hosts github
-            {
-                return [splitStr[gitIdx + 1], splitStr[gitIdx + 2].replace(".git", "")]; // return owner and repo name with removed .git
+                // just like a github link check to see if the index exists
+                if (gitIdx > -1) // NPM link hosts github
+                {
+                    return [splitStr[gitIdx + 1], splitStr[gitIdx + 2].replace(".git", "")]; // return owner and repo name with removed .git
+                }
             }
         }
 

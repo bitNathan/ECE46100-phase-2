@@ -4,7 +4,7 @@ import logger from "./logger";
 export async function getCorrectness(owner: string, repoName: string): Promise<number[]>
 {
     // record the start time
-    var start:number = new Date().getTime();
+    var start:number = performance.now();
 
     // Graph QL query
     const query = `
@@ -71,7 +71,7 @@ export async function getCorrectness(owner: string, repoName: string): Promise<n
     }
 
     // get the elapsed time in seconds (divide by 1000)
-    var elapsed_time:number = (new Date().getTime() - start) / 1000;
+    var elapsed_time:number = performance.now() / 1000;
 
     logger.infoDebug(`Successfully calculated Correctness of ${score} for ${owner}/${repoName} in ${elapsed_time}s`);
 

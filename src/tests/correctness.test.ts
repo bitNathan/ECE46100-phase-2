@@ -5,8 +5,8 @@ import { getCorrectness } from '../correctness';
 // 3 test cases
 
 // Mocking dependencies
-jest.mock('../src/graphql_request');
-jest.mock('../src/logger');
+jest.mock('../graphql_request');
+jest.mock('../logger');
 
 describe('getCorrectness', () => {
     // Test case for successful correctness calculation

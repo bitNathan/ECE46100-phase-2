@@ -4,8 +4,8 @@ import { getLicense } from '../license';
 
 // 6 test cases
 
-jest.mock('../src/graphql_request');
-jest.mock('../src/logger');
+jest.mock('../graphql_request');
+jest.mock('../logger');
 
 describe('getLicense', () => {
     const owner = 'testOwner';

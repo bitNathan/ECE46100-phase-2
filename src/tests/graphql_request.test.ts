@@ -56,7 +56,8 @@ describe('graphqlRequest', () => {
 
         // Mocking the fetch function to return a non-OK response
         global.fetch = jest.fn().mockResolvedValueOnce({
-            ok: false
+            ok: false,
+            json: jest.fn().mockResolvedValue({})
         });
 
         await expect(graphqlRequest(query)).rejects.toEqual("Error failed to get a response from the API");

@@ -27,7 +27,7 @@ describe('Ramp Up Metric', () => {
         cloneGitHubRepo(testUrl, testDir);
 
         // Assert that execSync was called with the correct command
-        expect(execSync).toHaveBeenCalledWith(`git clone --depth 1 ${testUrl} ${testDir}`, { stdio: 'inherit' });
+        expect(execSync).toHaveBeenCalledWith(`git clone --quiet --depth 1 ${testUrl} ${testDir}`, { stdio: 'inherit' });
     });
 
     // Test for deleting a directory recursively
@@ -84,25 +84,47 @@ describe('Ramp Up Metric', () => {
         expect(time).toBeGreaterThan(0); // Ensure it's a positive time
     });
 
-    // Test for getting all JavaScript files in a directory
     it('should get all JavaScript files in a directory', () => {
+        const testDir = 'test_repo'; // Your test directory
+    
         // Mock the file system
-        (fs.readdirSync as jest.Mock).mockReturnValue(['file1.js', 'file2.txt', 'folder']);
+        (fs.readdirSync as jest.Mock).mockImplementation((dir) => {
+            if (dir === testDir) {
+                return ['file1.js', 'file2.txt', 'folder']; // Simulate top-level directory contents
+            } else if (dir === path.join(testDir, 'folder')) {
+                return ['file2.txt']; // Simulate contents of 'folder'
+            }
+            return []; // Default case
+        });
+    
         (fs.statSync as jest.Mock).mockImplementation((filePath) => {
+            // Handle the top-level files
             if (filePath === path.join(testDir, 'file1.js')) {
-                return { isDirectory: () => false };
+                return { isDirectory: () => false }; // Simulate a JS file
             }
             if (filePath === path.join(testDir, 'file2.txt')) {
-                return { isDirectory: () => false };
+                return { isDirectory: () => false }; // Simulate a non-JS file
             }
-            return { isDirectory: () => true }; // Simulate a folder
+            if (filePath === path.join(testDir, 'folder')) {
+                return { isDirectory: () => true }; // Simulate a folder
+            }
+            // If you want to ignore JS files in the nested folder:
+            if (filePath === path.join(testDir, 'folder', 'file1.js')) {
+                return { isDirectory: () => false }; // Simulate a JS file in the folder
+            }
+            if (filePath === path.join(testDir, 'folder', 'file2.txt')) {
+                return { isDirectory: () => false }; // Simulate a non-JS file in the folder
+            }
+    
+            // If the filePath doesn't match any known paths, throw an error
+            throw new Error(`Unexpected filePath: ${filePath}`);
         });
-
+    
         // Call the function
         const files = getJavaScriptFiles(testDir);
-
-        // Assert the result
-        expect(files).toEqual([path.join(testDir, 'file1.js')]);
+    
+        // Assert that only JavaScript files are returned
+        expect(files).toEqual([path.join(testDir, 'file1.js')]); // Expect only the top-level JS file
     });
 
     // Test for calculating total time from a GitHub repository
@@ -125,7 +147,13 @@ describe('Ramp Up Metric', () => {
         const result = calculateTotalTimeFromRepo(testUrl);
 
         // Assert the result is valid
-        expect(result).toBeLessThan(1); // Assuming time_max is set to 100
+        const [score, latency] = result; // Destructure the array result
+
+        // Assert that the score is less than 1 (assuming time_max is set to 100)
+        expect(score).toBeLessThan(1);
+
+        // Assert that the latency is greater than 0 (ensure the calculation took time)
+        expect(latency).toBeGreaterThan(0);
     });
 
     // Test for handling errors during repository cloning
@@ -135,9 +163,9 @@ describe('Ramp Up Metric', () => {
             throw new Error('Clone failed');
         });
 
-        // Call the function and expect an error
-        expect(() => {
-            calculateTotalTimeFromRepo(testUrl);
-        }).toThrow('Clone failed');
+
+        const [result,] = calculateTotalTimeFromRepo(testUrl);
+        expect(result).toBe(0); // Indicating failure
+
     });
 });

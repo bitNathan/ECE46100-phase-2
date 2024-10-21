@@ -5,8 +5,8 @@ import { getResponsive } from '../responsive_maintainer';
 // 5 test cases
 
 // Mock the necessary modules
-jest.mock('../src/graphql_request');
-jest.mock('../src/logger');
+jest.mock('../graphql_request');
+jest.mock('../logger');
 
 describe('Responsive Maintainer Metric', () => {
     const owner = 'some-user';
