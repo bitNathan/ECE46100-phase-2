@@ -8,6 +8,7 @@ import { getCorrectness } from './correctness';
 import { calculateTotalTimeFromRepo } from './ramp_up_metric';
 import { getResponsive } from './responsive_maintainer';
 import { getLicense } from './license';
+import { getPullRequestCodeReview } from './pull_request_code_review'; // Import new metric
 
 interface AnalysisResult {
     URL: string;
@@ -23,16 +24,18 @@ interface AnalysisResult {
     ResponsiveMaintainer_Latency: number;
     License: number;
     License_Latency: number;
+    PullRequestCodeReview: number;                // Add new metric here
+    PullRequestCodeReview_Latency: number;       // Add latency for new metric
 }
 
 class RepositoryAnalyzer {
     private static calculateNetScore(metrics: Partial<AnalysisResult>): number {
-        const { BusFactor, Correctness, RampUp, ResponsiveMaintainer, License } = metrics;
+        const { BusFactor, Correctness, RampUp, ResponsiveMaintainer, License, PullRequestCodeReview } = metrics;
         if (BusFactor === undefined || Correctness === undefined || RampUp === undefined || 
-            ResponsiveMaintainer === undefined || License === undefined) {
+            ResponsiveMaintainer === undefined || License === undefined || PullRequestCodeReview === undefined) {
             throw new Error("Missing metrics for NetScore calculation");
         }
-        return ((0.3 * BusFactor) + (0.25 * Correctness) + (0.25 * RampUp) + (0.2 * ResponsiveMaintainer)) * License;
+        return ((0.25 * BusFactor) + (0.2 * Correctness) + (0.2 * RampUp) + (0.2 * ResponsiveMaintainer) + (0.15 * PullRequestCodeReview)) * License;
     }
 
     static async analyzeRepository(repoUrl: string): Promise<AnalysisResult> {
@@ -59,16 +62,30 @@ class RepositoryAnalyzer {
             getCorrectness(owner, repo),
             calculateTotalTimeFromRepo(`https://github.com/${owner}/${repo}`),
             getResponsive(owner, repo),
-            getLicense(owner, repo)
+            getLicense(owner, repo),
+            getPullRequestCodeReview(owner, repo)      // Add new metric call
         ];
 
-        const [
-            [busFactor, busFactorLatency],
-            [correctness, correctnessLatency],
-            [rampUp, rampUpLatency],
-            [responsiveMaintainer, responsiveMaintainerLatency],
-            [license, licenseLatency]
-        ] = await Promise.all(metricPromises);
+        const metricResults = await Promise.all(metricPromises);
+
+        // Destructure with type assertions and default values
+        const busFactor = Array.isArray(metricResults[0]) ? metricResults[0][0] : metricResults[0];
+        const busFactorLatency = Array.isArray(metricResults[0]) ? metricResults[0][1] : 0;
+        
+        const correctness = Array.isArray(metricResults[1]) ? metricResults[1][0] : metricResults[1];
+        const correctnessLatency = Array.isArray(metricResults[1]) ? metricResults[1][1] : 0;
+
+        const rampUp = Array.isArray(metricResults[2]) ? metricResults[2][0] : metricResults[2];
+        const rampUpLatency = Array.isArray(metricResults[2]) ? metricResults[2][1] : 0;
+
+        const responsiveMaintainer = Array.isArray(metricResults[3]) ? metricResults[3][0] : metricResults[3];
+        const responsiveMaintainerLatency = Array.isArray(metricResults[3]) ? metricResults[3][1] : 0;
+
+        const license = Array.isArray(metricResults[4]) ? metricResults[4][0] : metricResults[4];
+        const licenseLatency = Array.isArray(metricResults[4]) ? metricResults[4][1] : 0;
+
+        const pullRequestCodeReview = Array.isArray(metricResults[5]) ? metricResults[5][0] : metricResults[5];
+        const pullRequestCodeReviewLatency = Array.isArray(metricResults[5]) ? metricResults[5][1] : 0;
 
         const result: AnalysisResult = {
             URL: repoUrl,
@@ -83,7 +100,9 @@ class RepositoryAnalyzer {
             ResponsiveMaintainer: Number(responsiveMaintainer.toFixed(2)),
             ResponsiveMaintainer_Latency: Number(responsiveMaintainerLatency.toFixed(3)),
             License: Number(license.toFixed(2)),
-            License_Latency: Number(licenseLatency.toFixed(3))
+            License_Latency: Number(licenseLatency.toFixed(3)),
+            PullRequestCodeReview: Number(pullRequestCodeReview.toFixed(2)), // Add to result
+            PullRequestCodeReview_Latency: Number(pullRequestCodeReviewLatency.toFixed(3)) // Add to result
         };
 
         result.NetScore = Number(this.calculateNetScore(result).toFixed(2));
