@@ -8,7 +8,7 @@ import { getCorrectness } from './correctness';
 import { calculateTotalTimeFromRepo } from './ramp_up_metric';
 import { getResponsive } from './responsive_maintainer';
 import { getLicense } from './license';
-import { getSecurityVulnerabilities } from './security_vulnerability';  // Import the new metric
+import { getPullRequestCodeReview } from './pull_request_code_review'; // Import new metric
 
 interface AnalysisResult {
     URL: string;
@@ -24,18 +24,18 @@ interface AnalysisResult {
     ResponsiveMaintainer_Latency: number;
     License: number;
     License_Latency: number;
-    SecurityVulnerability: number;               // Add SecurityVulnerability here
-    SecurityVulnerability_Latency: number;       // Add SecurityVulnerability_Latency here
+    PullRequestCodeReview: number;                // Add new metric here
+    PullRequestCodeReview_Latency: number;       // Add latency for new metric
 }
 
 class RepositoryAnalyzer {
     private static calculateNetScore(metrics: Partial<AnalysisResult>): number {
-        const { BusFactor, Correctness, RampUp, ResponsiveMaintainer, License, SecurityVulnerability } = metrics;
+        const { BusFactor, Correctness, RampUp, ResponsiveMaintainer, License, PullRequestCodeReview } = metrics;
         if (BusFactor === undefined || Correctness === undefined || RampUp === undefined || 
-            ResponsiveMaintainer === undefined || License === undefined || SecurityVulnerability === undefined) {
+            ResponsiveMaintainer === undefined || License === undefined || PullRequestCodeReview === undefined) {
             throw new Error("Missing metrics for NetScore calculation");
         }
-        return ((0.25 * BusFactor) + (0.2 * Correctness) + (0.2 * RampUp) + (0.2 * ResponsiveMaintainer) + (0.15 * SecurityVulnerability)) * License;
+        return ((0.25 * BusFactor) + (0.2 * Correctness) + (0.2 * RampUp) + (0.2 * ResponsiveMaintainer) + (0.15 * PullRequestCodeReview)) * License;
     }
 
     static async analyzeRepository(repoUrl: string): Promise<AnalysisResult> {
@@ -63,17 +63,29 @@ class RepositoryAnalyzer {
             calculateTotalTimeFromRepo(`https://github.com/${owner}/${repo}`),
             getResponsive(owner, repo),
             getLicense(owner, repo),
-            getSecurityVulnerabilities(owner, repo)  // Add new metric call
+            getPullRequestCodeReview(owner, repo)      // Add new metric call
         ];
 
-        const [
-            [busFactor, busFactorLatency],
-            [correctness, correctnessLatency],
-            [rampUp, rampUpLatency],
-            [responsiveMaintainer, responsiveMaintainerLatency],
-            [license, licenseLatency],
-            [securityVulnerability, securityVulnerabilityLatency]  // Capture the result of new metric
-        ] = await Promise.all(metricPromises);
+        const metricResults = await Promise.all(metricPromises);
+
+        // Destructure with type assertions and default values
+        const busFactor = Array.isArray(metricResults[0]) ? metricResults[0][0] : metricResults[0];
+        const busFactorLatency = Array.isArray(metricResults[0]) ? metricResults[0][1] : 0;
+        
+        const correctness = Array.isArray(metricResults[1]) ? metricResults[1][0] : metricResults[1];
+        const correctnessLatency = Array.isArray(metricResults[1]) ? metricResults[1][1] : 0;
+
+        const rampUp = Array.isArray(metricResults[2]) ? metricResults[2][0] : metricResults[2];
+        const rampUpLatency = Array.isArray(metricResults[2]) ? metricResults[2][1] : 0;
+
+        const responsiveMaintainer = Array.isArray(metricResults[3]) ? metricResults[3][0] : metricResults[3];
+        const responsiveMaintainerLatency = Array.isArray(metricResults[3]) ? metricResults[3][1] : 0;
+
+        const license = Array.isArray(metricResults[4]) ? metricResults[4][0] : metricResults[4];
+        const licenseLatency = Array.isArray(metricResults[4]) ? metricResults[4][1] : 0;
+
+        const pullRequestCodeReview = Array.isArray(metricResults[5]) ? metricResults[5][0] : metricResults[5];
+        const pullRequestCodeReviewLatency = Array.isArray(metricResults[5]) ? metricResults[5][1] : 0;
 
         const result: AnalysisResult = {
             URL: repoUrl,
@@ -89,8 +101,8 @@ class RepositoryAnalyzer {
             ResponsiveMaintainer_Latency: Number(responsiveMaintainerLatency.toFixed(3)),
             License: Number(license.toFixed(2)),
             License_Latency: Number(licenseLatency.toFixed(3)),
-            SecurityVulnerability: Number(securityVulnerability.toFixed(2)),  // Add to result
-            SecurityVulnerability_Latency: Number(securityVulnerabilityLatency.toFixed(3))  // Add to result
+            PullRequestCodeReview: Number(pullRequestCodeReview.toFixed(2)), // Add to result
+            PullRequestCodeReview_Latency: Number(pullRequestCodeReviewLatency.toFixed(3)) // Add to result
         };
 
         result.NetScore = Number(this.calculateNetScore(result).toFixed(2));
