@@ -7,7 +7,8 @@ enum VerbosityType
 {
     SILENT = 0,
     INFO = 1,
-    DEBUG = 2
+    DEBUG = 2,
+    ERROR = 3 // Adding an ERROR verbosity level
 }
 
 // Custom Logger class
@@ -60,6 +61,11 @@ class Logger {
     public infoDebug(message: string)
     {
         this.printLog(message, config.LOG_LEVEL);
+    }
+
+    // For error messages
+    public error(message: string) {
+        this.printLog(message, VerbosityType.ERROR);
     }
 }
 

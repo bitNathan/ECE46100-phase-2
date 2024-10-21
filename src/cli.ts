@@ -8,6 +8,7 @@ import { getCorrectness } from './correctness';
 import { calculateTotalTimeFromRepo } from './ramp_up_metric';
 import { getResponsive } from './responsive_maintainer';
 import { getLicense } from './license';
+import { getSecurityVulnerabilities } from './security_vulnerability';  // Import the new metric
 
 interface AnalysisResult {
     URL: string;
@@ -23,16 +24,18 @@ interface AnalysisResult {
     ResponsiveMaintainer_Latency: number;
     License: number;
     License_Latency: number;
+    SecurityVulnerability: number;               // Add SecurityVulnerability here
+    SecurityVulnerability_Latency: number;       // Add SecurityVulnerability_Latency here
 }
 
 class RepositoryAnalyzer {
     private static calculateNetScore(metrics: Partial<AnalysisResult>): number {
-        const { BusFactor, Correctness, RampUp, ResponsiveMaintainer, License } = metrics;
+        const { BusFactor, Correctness, RampUp, ResponsiveMaintainer, License, SecurityVulnerability } = metrics;
         if (BusFactor === undefined || Correctness === undefined || RampUp === undefined || 
-            ResponsiveMaintainer === undefined || License === undefined) {
+            ResponsiveMaintainer === undefined || License === undefined || SecurityVulnerability === undefined) {
             throw new Error("Missing metrics for NetScore calculation");
         }
-        return ((0.3 * BusFactor) + (0.25 * Correctness) + (0.25 * RampUp) + (0.2 * ResponsiveMaintainer)) * License;
+        return ((0.25 * BusFactor) + (0.2 * Correctness) + (0.2 * RampUp) + (0.2 * ResponsiveMaintainer) + (0.15 * SecurityVulnerability)) * License;
     }
 
     static async analyzeRepository(repoUrl: string): Promise<AnalysisResult> {
@@ -59,7 +62,8 @@ class RepositoryAnalyzer {
             getCorrectness(owner, repo),
             calculateTotalTimeFromRepo(`https://github.com/${owner}/${repo}`),
             getResponsive(owner, repo),
-            getLicense(owner, repo)
+            getLicense(owner, repo),
+            getSecurityVulnerabilities(owner, repo)  // Add new metric call
         ];
 
         const [
@@ -67,7 +71,8 @@ class RepositoryAnalyzer {
             [correctness, correctnessLatency],
             [rampUp, rampUpLatency],
             [responsiveMaintainer, responsiveMaintainerLatency],
-            [license, licenseLatency]
+            [license, licenseLatency],
+            [securityVulnerability, securityVulnerabilityLatency]  // Capture the result of new metric
         ] = await Promise.all(metricPromises);
 
         const result: AnalysisResult = {
@@ -83,7 +88,9 @@ class RepositoryAnalyzer {
             ResponsiveMaintainer: Number(responsiveMaintainer.toFixed(2)),
             ResponsiveMaintainer_Latency: Number(responsiveMaintainerLatency.toFixed(3)),
             License: Number(license.toFixed(2)),
-            License_Latency: Number(licenseLatency.toFixed(3))
+            License_Latency: Number(licenseLatency.toFixed(3)),
+            SecurityVulnerability: Number(securityVulnerability.toFixed(2)),  // Add to result
+            SecurityVulnerability_Latency: Number(securityVulnerabilityLatency.toFixed(3))  // Add to result
         };
 
         result.NetScore = Number(this.calculateNetScore(result).toFixed(2));
