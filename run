@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Go into the backend folder
+cd backend
+
 # Check for the first argument (the command)
 case "$1" in
     # Install dependencies
