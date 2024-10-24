@@ -1,7 +1,11 @@
 // This file contains API calls to interact with the backend.
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000'; // Replace with actual backend URL
+// If using proxy, you can use a relative path
+const API_BASE_URL = '/api'; // Use '/api' if proxy is configured
+
+// If not using proxy, specify the full URL with the backend port
+// const API_BASE_URL = 'http://localhost:3000';
 
 export const getPackages = async () => {
   try {

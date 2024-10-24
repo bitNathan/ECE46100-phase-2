@@ -5,6 +5,7 @@ module.exports = {
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'public'),
+    publicPath: '/', // Ensure publicPath is set
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js'],
@@ -22,6 +23,14 @@ module.exports = {
     static: {
       directory: path.join(__dirname, 'public'),
     },
-    port: 3000,
+    port: 8080, 
+    historyApiFallback: true, 
+    proxy: [
+      {
+        context: ['/api'],
+        target: 'http://localhost:3000',
+        secure: false,
+      },
+    ],
   },
 };

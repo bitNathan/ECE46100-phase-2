@@ -1,5 +1,3 @@
-// This component allows users to upload a new package.
-
 import React, { useState } from 'react';
 import { uploadPackage } from '../services/api';
 
