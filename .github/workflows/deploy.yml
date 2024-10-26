@@ -20,7 +20,7 @@ jobs:
   
       - name: ssh into instance
         run: |
-          cat $AWS_PEM > aws_pem.pem << EOF
+          echo $AWS_PEM > aws_pem.pem << EOF
           chmod 400 aws_pem.pem
           ssh -o StrictHostKeyChecking=no -i aws_pem.pem ubuntu@$AWS_NAME
           ls
