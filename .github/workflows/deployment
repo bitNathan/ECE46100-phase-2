@@ -1,9 +1,5 @@
-name: CI Pipeline
-on: 
-  push:
-    branches: [34-host-on-aws]
-  pull_request:
-    branches: [34-host-on-aws]
+name: AWS Deployment
+on: [push, pull_request]
 jobs:
     runs-on: ubuntu-latest
     env:
