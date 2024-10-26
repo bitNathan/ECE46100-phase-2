@@ -1,12 +1,13 @@
 name: AWS Deployment
 on: pull_request
 jobs:
+  deploy:
     runs-on: ubuntu-latest
     env:
-      GITHUB_TOKEN: ${{secrets.TOKEN}}
-      AWS_PEM: ${{secrets.AWS_WEB_HOSTING_KEY_PEM}}
-      AWS_NAME: ${{secrets.INSTANCE_DNS}}
-  deploy:
+        GITHUB_TOKEN: ${{secrets.TOKEN}}
+        AWS_PEM: ${{secrets.AWS_WEB_HOSTING_KEY_PEM}}
+        AWS_NAME: ${{secrets.INSTANCE_DNS}}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
