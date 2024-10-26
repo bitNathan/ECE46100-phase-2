@@ -1,10 +1,8 @@
 name: AWS Deployment
-on: 
-  push:
+on:
   pull_request:
     branches:
     - 34-host-on-aws
-  workflow_dispatch:
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -20,9 +18,10 @@ jobs:
   
       - name: deploy code
         run: |
+          # EOF gives warning, but necessary for pem to be interpreted right
           echo $AWS_PEM > aws_pem.pem << EOF
           chmod 400 aws_pem.pem
-          ssh -o StrictHostKeyChecking=no -i aws_pem.pem ubuntu@$AWS_NAME
+          ssh -q -o StrictHostKeyChecking=no -i aws_pem.pem ubuntu@$AWS_NAME
 
           # TODO install nvm and nginx
           # TODO configure runfiles
