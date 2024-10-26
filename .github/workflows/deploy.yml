@@ -20,7 +20,8 @@ jobs:
       - name: ssh into instance
         run: |
           echo $AWS_PEM > aws_pem.pem
-          ssh -v -o StrictHostKeyChecking=no -i aws_pem.pem ubuntu@$AWS_NAME
+          chmod 400 aws_pem.pem
+          ssh -q -o StrictHostKeyChecking=no -i aws_pem.pem ubuntu@$AWS_NAME
                 
       - name: git pull
         run: |
