@@ -1,5 +1,9 @@
 name: AWS Deployment
-on: pull_request
+on: 
+  pull_request:
+    branches:
+    - 34-host-on-aws
+  workflow_dispatch:
 jobs:
   deploy:
     runs-on: ubuntu-latest
