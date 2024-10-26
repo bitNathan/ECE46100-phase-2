@@ -18,20 +18,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
   
-      - name: ssh into instance
+      - name: deploy code
         run: |
-          echo $AWS_PEM > aws_pem.pem << EOF
+          echo $AWS_PEM > aws_pem.pem
           chmod 400 aws_pem.pem
           ssh -o StrictHostKeyChecking=no -i aws_pem.pem ubuntu@$AWS_NAME
-          ls
-                
-      - name: git pull
-        run: |
+
+          # TODO install nvm and nginx
+          # TODO configure runfiles
+          
+          # pull
           cd ~/ECE46100-phase-2
           git checkout 34-host-on-aws
           git pull
-          
-      - name: restart nginx
-        run: |
+
+          # restart nginx
           sudo systemctl restart nginx
           sudo nginx -t
