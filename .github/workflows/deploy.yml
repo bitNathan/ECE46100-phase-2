@@ -18,7 +18,9 @@ jobs:
         uses: actions/checkout@v3
   
       - name: ssh into instance
-        run: ssh -v -o StrictHostKeyChecking=no -i $AWS_PEM ubuntu@$AWS_NAME
+        run: |
+          echo $AWS_PEM > aws_pem.pem
+          ssh -v -o StrictHostKeyChecking=no -i aws_pem.pem ubuntu@$AWS_NAME
                 
       - name: git pull
         run: |
