@@ -20,7 +20,7 @@ jobs:
   
       - name: deploy code
         run: |
-          echo $AWS_PEM > aws_pem.pem
+          echo $AWS_PEM > aws_pem.pem << EOF
           chmod 400 aws_pem.pem
           ssh -o StrictHostKeyChecking=no -i aws_pem.pem ubuntu@$AWS_NAME
 
