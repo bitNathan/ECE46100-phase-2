@@ -1,10 +1,16 @@
 name: AWS Deployment
 on:
+  # only run on approved PR
   pull_request:
     branches:
     - 34-host-on-aws
+    types:
+    - closed
+
 jobs:
   deploy:
+    # only runs when new code is merged, not when PR is raised
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     env:
         GITHUB_TOKEN: ${{secrets.TOKEN}}
