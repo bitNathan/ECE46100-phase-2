@@ -1,5 +1,5 @@
 name: AWS Deployment
-on: [push, pull_request]
+on: pull_request
 jobs:
     runs-on: ubuntu-latest
     env:
