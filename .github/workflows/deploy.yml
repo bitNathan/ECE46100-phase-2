@@ -1,5 +1,6 @@
 name: AWS Deployment
 on: 
+  push:
   pull_request:
     branches:
     - 34-host-on-aws
