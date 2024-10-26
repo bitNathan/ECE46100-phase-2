@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
         GITHUB_TOKEN: ${{secrets.TOKEN}}
-        AWS_PEM: ${{secrets.AWS_WEB_HOSTING_KEY_PEM}}
+        AWS_PEM: |
+          ${{secrets.AWS_WEB_HOSTING_KEY_PEM}}
         AWS_NAME: ${{secrets.INSTANCE_DNS}}
 
     steps:
@@ -19,7 +20,8 @@ jobs:
   
       - name: ssh into instance
         run: |
-          echo $AWS_PEM > aws_pem.pem
+          echo |
+            $AWS_PEM > aws_pem.pem
           chmod 400 aws_pem.pem
           ssh -o StrictHostKeyChecking=no -i aws_pem.pem ubuntu@$AWS_NAME
           ls
