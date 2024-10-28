@@ -20,6 +20,7 @@ const upload = multer({ storage: storage });
 
 router.post('/package', upload.single('file'), async (req, res) => {
   try {
+    console.log('req:', req);
     const { name, version, debloat } = req.body;
     const file = req.file;
 

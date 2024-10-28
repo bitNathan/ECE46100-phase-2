@@ -2,7 +2,8 @@
 import axios from 'axios';
 
 // If using proxy, you can use a relative path
-const API_BASE_URL = '/api'; // Use '/api' if proxy is configured
+const API_BASE_URL = 'http://localhost:3000';
+ // Use '/api' if proxy is configured
 
 // If not using proxy, specify the full URL with the backend port
 // const API_BASE_URL = 'http://localhost:3000';
