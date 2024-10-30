@@ -18,23 +18,37 @@ export const getPackages = async () => {
   }
 };
 
-export const uploadPackage = async (name: string, version: string, file: File, debloat: boolean) => {
+export const uploadPackage = async (
+  name: string,
+  version: string,
+  content: string | null,
+  url: string | null,
+  debloat: boolean,
+  jsProgram: string
+) => {
   try {
-    const formData = new FormData();
-    formData.append('name', name);
-    formData.append('version', version);
-    formData.append('file', file);
-    formData.append('debloat', debloat.toString());
+    const requestData: any = {
+      Name: name,
+      Version: version,
+      debloat: debloat,
+      JSProgram: jsProgram,
+    };
 
-    await axios.post(`${API_BASE_URL}/package`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    if (content && !url) {
+      requestData.Content = content;
+    } else if (url && !content) {
+      requestData.URL = url;
+    } else {
+      alert('Please provide either content or URL, but not both.');
+      return;
+    }
+
+    await axios.post(`${API_BASE_URL}/package`, requestData);
   } catch (error) {
     console.error('Error uploading package:', error);
   }
 };
+
 
 export const updatePackage = async (packageId: string, version: string, file: File) => {
   try {

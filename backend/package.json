@@ -9,7 +9,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "aws-sdk": "^2.1691.0",
+    "@aws-sdk/client-s3": "^3.682.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "glob": "^11.0.0",

@@ -7,8 +7,8 @@ const app = express();
 // Enable CORS for all routes
 app.use(cors());
 
-// Enable JSON parsing
-app.use(express.json());
+// Increase the JSON body size limit to 50MB (adjust as needed)
+app.use(express.json({ limit: '100mb' }));
 
 // Use the package router
 app.use('/', packageRouter);

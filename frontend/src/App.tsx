@@ -1,4 +1,3 @@
-// This file serves as the main component for the front-end application.
 import React from 'react';
 import PackageList from './components/PackageList';
 import UploadForm from './components/UploadForm';

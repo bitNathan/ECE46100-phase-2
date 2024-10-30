@@ -12,10 +12,16 @@ module.exports = {
   },
   module: {
     rules: [
+      // TypeScript loader
       {
         test: /\.(ts|tsx)$/,
         use: 'ts-loader',
         exclude: /node_modules/,
+      },
+      // CSS loaders
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader'],
       },
     ],
   },
@@ -23,8 +29,8 @@ module.exports = {
     static: {
       directory: path.join(__dirname, 'public'),
     },
-    port: 8080, 
-    historyApiFallback: true, 
+    port: 8080,
+    historyApiFallback: true,
     proxy: [
       {
         context: ['/api'],
