@@ -9,6 +9,7 @@ import { calculateTotalTimeFromRepo } from './ramp_up_metric';
 import { getResponsive } from './responsive_maintainer';
 import { getLicense } from './license';
 import { getPullRequestCodeReview } from './pull_request_code_review'; // Import new metric
+import { calculateRateMetrics } from './rate_metrics'; //new
 
 interface AnalysisResult {
     URL: string;
