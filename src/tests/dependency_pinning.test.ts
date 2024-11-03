@@ -26,4 +26,13 @@ describe('Dependency Pinning Metric', () => {
 
         expect(result).toBe(0); // No pinned dependencies
     });
+
+    it('should return 1 when there are no dependencies', async () => {
+        (getDependencies as jest.Mock).mockResolvedValue([]); // No dependencies
+    
+        const result = await calculateDependencyPinning('mockOwner', 'mockRepo');
+    
+        expect(result).toBe(1); // Expect 1.0 for zero dependencies as per requirements
+    });
+    
 });

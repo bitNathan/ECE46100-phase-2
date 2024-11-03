@@ -2,23 +2,33 @@
 import { getDependencies } from './dependency_parser';
 import { getPullRequestCodeReview } from './pull_request_code_review';
 
-export const calculateDependencyPinning = async (owner: string, repo: string): Promise<number> => {
-  const dependencies = await getDependencies(owner, repo);
-  
-  // If no dependencies, return 1.0
-  if (dependencies.length === 0) return 1.0;
-  
-  // Count pinned dependencies
-  const pinnedCount = dependencies.filter(dep => {
-    const version = dep.version.trim();
-    return !version.includes('^') && 
+const isMajorMinorPinned = (version: string): boolean => {
+    // Remove any leading special characters (^, ~, v)
+    const cleanVersion = version.replace(/^[^0-9]*/, '');
+    
+    // Match versions like "2.3" or "2.3.4" but not "2.3.x" or "~2.3.4"
+    const majorMinorRegex = /^\d+\.\d+(\.\d+)?$/;
+    
+    return majorMinorRegex.test(cleanVersion) && 
+           !version.includes('^') && 
            !version.includes('~') && 
-           !version.includes('x') &&
-           !version.includes('*');
-  }).length;
+           !version.endsWith('x') && 
+           !version.endsWith('*');
+};
   
-  // Return the fraction of pinned dependencies
-  return pinnedCount / dependencies.length;
+
+export const calculateDependencyPinning = async (owner: string, repo: string): Promise<number> => {
+    const dependencies = await getDependencies(owner, repo);
+    
+    // If no dependencies, return 1.0
+    if (dependencies.length === 0) return 1.0;
+    
+    // Count dependencies pinned to major+minor version
+    const pinnedDependencies = dependencies.filter(dep => isMajorMinorPinned(dep.version));
+    console.log('Pinned Dependencies:', pinnedDependencies); // Debug log
+    
+    // Calculate and return fraction of pinned dependencies
+    return pinnedDependencies.length / dependencies.length;
 };
 
 export const calculateRateMetrics = async (owner: string, repo: string): Promise<{

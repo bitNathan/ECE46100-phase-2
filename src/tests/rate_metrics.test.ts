@@ -53,4 +53,18 @@ describe('Rate Metrics Calculation', () => {
     expect(result.subScores.dependencyPinning).toBe(1.0);
     expect(result.netScore).toBeCloseTo(0.5, 4);
   });
+  //
+  it('should handle different version formats correctly', async () => {
+    (getDependencies as jest.Mock).mockResolvedValueOnce([
+      { name: 'dep1', version: '2.3.x' },    // Valid - pinned to major.minor
+      { name: 'dep2', version: '2.3.*' },    // Valid - pinned to major.minor
+      { name: 'dep3', version: '2.3' },      // Valid - major.minor only
+      { name: 'dep4', version: '2.3.4' },    // Valid - fully pinned
+      { name: 'dep5', version: '^2.3.4' },   // Invalid - uses ^
+      { name: 'dep6', version: '~2.3.4' }    // Invalid - uses ~
+    ]);
+    
+    const result = await calculateRateMetrics('mockOwner', 'mockRepo');
+    expect(result.subScores.dependencyPinning).toBeCloseTo(2 / 6, 4); // 
+  });
 });
