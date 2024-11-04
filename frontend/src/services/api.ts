@@ -18,6 +18,15 @@ export const getPackages = async () => {
   }
 };
 
+export const fetchPackageVersion = async (packageId: string) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/package/${packageId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching package:', error);
+    return null;
+  }
+}
 export const uploadPackage = async (
   name: string,
   version: string,
@@ -26,6 +35,7 @@ export const uploadPackage = async (
   debloat: boolean,
   jsProgram: string
 ) => {
+
   try {
     const requestData: any = {
       Name: name,
