@@ -51,6 +51,7 @@ export const uploadPackage = async (
     }
 
     await axios.post(`${API_BASE_URL}/package`, requestData);
+    alert('Package uploaded successfully!');
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const statusCode = error.response?.status;

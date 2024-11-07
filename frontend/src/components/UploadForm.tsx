@@ -35,7 +35,6 @@ const UploadForm: React.FC = () => {
     
     try {
       await uploadPackage(packageName, content, url, debloat, jsProgram);
-      alert('Package uploaded successfully!');
     } catch (error) {
       // Error will be handled by uploadPackage function
       console.error('Submit error:', error);
