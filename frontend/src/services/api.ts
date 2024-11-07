@@ -29,17 +29,14 @@ export const fetchPackageVersion = async (packageId: string) => {
 }
 export const uploadPackage = async (
   name: string,
-  version: string,
   content: string | null,
   url: string | null,
   debloat: boolean,
   jsProgram: string
 ) => {
-
   try {
     const requestData: any = {
       Name: name,
-      Version: version,
       debloat: debloat,
       JSProgram: jsProgram,
     };
@@ -55,7 +52,15 @@ export const uploadPackage = async (
 
     await axios.post(`${API_BASE_URL}/package`, requestData);
   } catch (error) {
-    console.error('Error uploading package:', error);
+    if (axios.isAxiosError(error)) {
+      const statusCode = error.response?.status;
+      const errorMessage = error.response?.data?.message || 'An unknown error occurred';
+
+      alert(`Error: ${errorMessage} (Status Code: ${statusCode})`);
+
+    } else {
+      alert('Error: Failed to connect to the server.');
+    }
   }
 };
 

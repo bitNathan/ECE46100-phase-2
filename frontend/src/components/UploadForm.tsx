@@ -3,7 +3,6 @@ import { uploadPackage } from '../services/api';
 
 const UploadForm: React.FC = () => {
   const [packageName, setPackageName] = useState('');
-  const [version, setVersion] = useState('');
   const [content, setContent] = useState<string | null>(null);
   const [url, setUrl] = useState('');
   const [debloat, setDebloat] = useState(false);
@@ -28,12 +27,19 @@ const UploadForm: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!packageName || (!content && !url)) {
-      alert('Please provide a package name and either a file or a URL.');
+    
+    if (!content && !url) {
+      alert('Please provide either a file or a URL.');
       return;
     }
-    await uploadPackage(packageName, version, content, url, debloat, jsProgram);
-    alert('Package uploaded successfully!');
+    
+    try {
+      await uploadPackage(packageName, content, url, debloat, jsProgram);
+      alert('Package uploaded successfully!');
+    } catch (error) {
+      // Error will be handled by uploadPackage function
+      console.error('Submit error:', error);
+    }
   };
 
   return (
@@ -43,12 +49,6 @@ const UploadForm: React.FC = () => {
         placeholder="Package Name"
         value={packageName}
         onChange={(e) => setPackageName(e.target.value)}
-      />
-      <input
-        type="text"
-        placeholder="Version"
-        value={version}
-        onChange={(e) => setVersion(e.target.value)}
       />
       <input
         type="file"

@@ -1,8 +1,14 @@
 import express from 'express';
 import { processPackage } from '../utils/packageProcessor';
+import { ratePackage } from '../utils/ratePackage';
+import { savePackageMetadata } from '../utils/packageMetadata';
+import { extractNameAndVersionFromURL } from '../utils/handleURL';
+
+
 import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import axios from 'axios';
 import crypto from 'crypto';
+
 
 const router = express.Router();
 
@@ -15,33 +21,17 @@ const s3Client = new S3Client({
   },
 });
 
-// Placeholder ratePackage function
-// ****Checking quality is only done on public ingest. ACME employees are trusted to upload code directly.
-const ratePackage = async (packageBuffer: Buffer): Promise<number> => {
-  // Implement package rating logic here
-  // For now, return a random rating between 0 and 1
-  return 1 //Math.random();
-};
-
 // Route to handle package upload/ingest
 router.post('/package', async (req, res) => {
   try {
     const {
       Name,
-      // POST /package: Here, a new package is created for the time in the registry, so we can assume the version to be 1.0.0. You might also consider reading the version from package.json if it exists.
-      // POST /package: Copy the version from the URL.
-      Version = '1.0.0',
+      Version,
       Content,
       URL,
       debloat = false,
       JSProgram = '',
     } = req.body;
-
-    // Validate request body
-    if (!Name) {
-      res.status(400).json({ message: 'Missing Name' });
-      return;
-    }
 
     if ((Content && URL) || (!Content && !URL)) {
       res.status(400).json({
@@ -50,7 +40,14 @@ router.post('/package', async (req, res) => {
       return;
     }
 
+    if (Content && !Name) {
+      res.status(400).json({ message: 'Name is required for Content' });
+      return;
+    }
+
     let packageBuffer: Buffer | null = null;
+    let packageName = Name;
+    let packageVersion = Version;
 
     if (Content) {
       // Decode Base64 Content
@@ -63,6 +60,14 @@ router.post('/package', async (req, res) => {
     } else if (URL) {
       // Fetch package from URL
       try {
+        // Copy the version and Name from the URL.
+        if (!Name || !Version) {
+          const {extractedName, extractedVersion} = await extractNameAndVersionFromURL(URL);
+          packageName = extractedName || packageName;
+          packageVersion = extractedVersion || packageVersion;
+        }
+
+        // Fetch the package buffer
         const axiosResponse = await axios.get(URL, {
           responseType: 'arraybuffer',
         });
@@ -78,12 +83,38 @@ router.post('/package', async (req, res) => {
       return;
     }
 
+    // default version to 1.0.0 if not provided
+    if (!packageVersion) {
+      packageVersion = '1.0.0';
+    }
+
     // Handle debloat if required
     if (debloat === true) {
       packageBuffer = await processPackage(packageBuffer);
     }
 
-    // Rate the package
+    /*
+    // IF USING INTERNAL AUTHENTICATION
+    // Authentication middleware
+    app.use((req, res, next) => {
+      const token = req.headers['authenticationtoken'];
+      if (!token || !isValidToken(token)) {
+        return res.status(403).json({ message: 'Invalid or missing AuthenticationToken' });
+      }
+      next();
+    });
+
+    const isInternalUser = checkIfInternalUser(req.headers['authenticationtoken']);
+    if (!isInternalUser) {
+      const rating = await ratePackage(packageBuffer);
+      if (rating < 0.5) {
+        res.status(424).json({ message: 'Package is not uploaded due to the disqualified rating.' });
+        return;
+      }
+    }
+    */
+
+    // Rate the package (NOT USING INTERNAL AUTHENTICATION)
     const rating = await ratePackage(packageBuffer);
     if (rating < 0.5) {
       // Assuming 0.5 as disqualification threshold
@@ -94,14 +125,14 @@ router.post('/package', async (req, res) => {
     }
 
     // Generate ID
-    const ID = crypto.createHash('sha256').update(Name + Version).digest('hex');
+    const packageID = crypto.createHash('sha256').update(Name + Version).digest('hex');
 
     // Check if package already exists
     try {
       await s3Client.send(
         new HeadObjectCommand({
           Bucket: process.env.AWS_S3_BUCKET_NAME as string,
-          Key: `${ID}.tgz`,
+          Key: `${packageID}.tgz`,
         })
       );
       res.status(409).json({ message: 'Package already exists.' });
@@ -118,7 +149,7 @@ router.post('/package', async (req, res) => {
     // Upload to AWS S3
     const params = {
       Bucket: process.env.AWS_S3_BUCKET_NAME as string,
-      Key: `${ID}.tgz`,
+      Key: `${packageID}.tgz`,
       Body: packageBuffer,
       ContentType: 'application/gzip',
     };
@@ -127,29 +158,40 @@ router.post('/package', async (req, res) => {
       await s3Client.send(new PutObjectCommand(params));
     } catch (error) {
       console.error('Error uploading package:', error);
-      res.status(500).json({ message: 'Server error during upload' });
+      res.status(400).json({ message: 'Server error during upload' });
       return;
     }
 
+    const packageMetadata = {
+      Name: packageName,
+      Version: packageVersion,
+      ID: packageID,
+      Source: Content ? 'Content' : 'URL',
+    };
+    
+    // Save packageMetadata in metadata storage
+    await savePackageMetadata(packageMetadata);
+    
     // Build the response object
     const response = {
       metadata: {
-        Name,
-        Version,
-        ID,
+        Name : packageName,
+        Version : packageVersion,
+        ID : packageID,
       },
       data: {
-        Content: Content || undefined,
-        URL: URL || undefined,
+        ...(Content ? { Content : packageBuffer.toString('base64') } : {}),
+        ...(URL ? { URL : URL } : {}),
         JSProgram,
-        debloat,
       },
     };
 
     res.status(201).json(response);
   } catch (error) {
     console.error('Error uploading package:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(400).json({ 
+      message: error instanceof Error ? error.message : 'Server error'
+    });
   }
 });
 
