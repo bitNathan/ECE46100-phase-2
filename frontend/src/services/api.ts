@@ -1,7 +1,12 @@
 // This file contains API calls to interact with the backend.
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000'; // Replace with actual backend URL
+// If using proxy, you can use a relative path
+const API_BASE_URL = 'http://localhost:3000';
+ // Use '/api' if proxy is configured
+
+// If not using proxy, specify the full URL with the backend port
+// const API_BASE_URL = 'http://localhost:3000';
 
 export const getPackages = async () => {
   try {
@@ -22,24 +27,44 @@ export const fetchPackageVersion = async (packageId: string) => {
     return null;
   }
 }
-
-export const uploadPackage = async (name: string, version: string, file: File, debloat: boolean) => {
+export const uploadPackage = async (
+  name: string,
+  content: string | null,
+  url: string | null,
+  debloat: boolean,
+  jsProgram: string
+) => {
   try {
-    const formData = new FormData();
-    formData.append('name', name);
-    formData.append('version', version);
-    formData.append('file', file);
-    formData.append('debloat', debloat.toString());
+    const requestData: any = {
+      Name: name,
+      debloat: debloat,
+      JSProgram: jsProgram,
+    };
 
-    await axios.post(`${API_BASE_URL}/package`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    if (content && !url) {
+      requestData.Content = content;
+    } else if (url && !content) {
+      requestData.URL = url;
+    } else {
+      alert('Please provide either content or URL, but not both.');
+      return;
+    }
+
+    await axios.post(`${API_BASE_URL}/package`, requestData);
+    alert('Package uploaded successfully!');
   } catch (error) {
-    console.error('Error uploading package:', error);
+    if (axios.isAxiosError(error)) {
+      const statusCode = error.response?.status;
+      const errorMessage = error.response?.data?.message || 'An unknown error occurred';
+
+      alert(`Error: ${errorMessage} (Status Code: ${statusCode})`);
+
+    } else {
+      alert('Error: Failed to connect to the server.');
+    }
   }
 };
+
 
 export const updatePackage = async (packageId: string, version: string, file: File) => {
   try {
