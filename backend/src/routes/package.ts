@@ -158,7 +158,7 @@ router.post('/package', async (req, res) => {
       await s3Client.send(new PutObjectCommand(params));
     } catch (error) {
       console.error('Error uploading package:', error);
-      res.status(400).json({ message: 'Server error during upload' });
+      res.status(500).json({ message: 'Server error during upload' });
       return;
     }
 
@@ -189,7 +189,7 @@ router.post('/package', async (req, res) => {
     res.status(201).json(response);
   } catch (error) {
     console.error('Error uploading package:', error);
-    res.status(400).json({ 
+    res.status(500).json({ 
       message: error instanceof Error ? error.message : 'Server error'
     });
   }

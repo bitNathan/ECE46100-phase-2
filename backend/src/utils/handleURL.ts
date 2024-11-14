@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { c } from 'tar';
 
 export const getGithubRepoFromNpm = async (packageName: string): Promise<string | null> => {
     try {
@@ -17,7 +16,7 @@ export const getGithubRepoFromNpm = async (packageName: string): Promise<string 
       // Repository URL is not available or it's not a GitHub URL
       return null;
     } catch (error) {
-      console.log(`Error fetching data for package ${packageName}: ${error}`);
+      console.error(`Error fetching data for package ${packageName}: ${error}`);
       return null;
     }
   }
@@ -46,12 +45,8 @@ export const getOwnerAndRepoFromURL = async (URL: string): Promise<{ owner: stri
 }
 
 export const extractNameAndVersionFromURL = async (URL: string): Promise<{ extractedName: string | null, extractedVersion: string | null }> => {
-    console.log(URL);
     const resolvedURL = await resolveURL(URL);
-    console.log(resolvedURL);
     const {owner, repo} = await getOwnerAndRepoFromURL(resolvedURL);
-    console.log(owner);
-    console.log(repo);
     try {
         // GitHub API URL for raw package.json content
         const url = `https://raw.githubusercontent.com/${owner}/${repo}/main/package.json`;
