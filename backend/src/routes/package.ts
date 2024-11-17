@@ -8,6 +8,7 @@ import { extractNameAndVersionFromURL } from '../utils/handleURL';
 import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import axios from 'axios';
 import crypto from 'crypto';
+import dbConnectionPromise from './db';
 
 
 const router = express.Router();
@@ -194,5 +195,40 @@ router.post('/package', async (req, res) => {
     });
   }
 });
+
+
+// Route to handle GET requests for a package by ID
+router.get('/package/:id', async (req, res) => {
+  const packageID = req.params.id; // Capture the package ID from the URL
+  try {
+      // Logic to retrieve package data from your storage (e.g., database or S3)
+      const packageData = await retrievePackageByID(packageID);
+      if (packageData) {
+          res.status(200).json(packageData);
+      } else {
+          res.status(404).json({ message: 'Package not found.' });
+      }
+  } catch (error) {
+      console.error('Error retrieving package:', error);
+      res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+async function retrievePackageByID(packageID: string) {
+  const query = 'SELECT * FROM packages WHERE id = $1'; // SQL query to fetch package data
+  try {
+      const db_connection = await dbConnectionPromise; 
+      const res = await db_connection.execute(query, [packageID]);
+      if (res.rows.length > 0) {
+          return res.rows[0]; // Assuming ID is unique and only one record should be returned
+      } else {
+          return null; // No package found with the given ID
+      }
+  } catch (error) {
+      console.error('Error retrieving package from database:', error);
+      throw error; // Rethrow the error to handle it in the calling function
+  }
+}
 
 export default router;
