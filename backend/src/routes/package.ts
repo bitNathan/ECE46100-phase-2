@@ -1,25 +1,28 @@
 import express from 'express';
 import { processPackage } from '../utils/packageProcessor';
 import { ratePackage } from '../utils/ratePackage';
-import { savePackageMetadata } from '../utils/packageMetadata';
 import { extractNameAndVersionFromURL } from '../utils/handleURL';
-
-
-import { S3Client, PutObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
 import axios from 'axios';
 import crypto from 'crypto';
 
-
+const mysql = require('mysql2/promise');
 const router = express.Router();
 
-// AWS Configuration
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID as string,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY as string,
-  },
-});
+// Database Configuration
+let db_connection = mysql.Connection;
+(async () => {
+  try {
+    db_connection = await mysql.createConnection({
+      host: process.env.AWS_RDS_ENDPOINT,
+      user: process.env.AWS_RDS_USERNAME,
+      password: process.env.AWS_RDS_PASSWORD,
+      database: process.env.AWS_RDS_DATABASE_NAME,
+      port: parseInt(process.env.AWS_RDS_PORT as string, 10)
+    });
+  } catch (error) {
+    console.error('Error connecting to the database:', error);
+  }
+})();
 
 // Route to handle package upload/ingest
 router.post('/package', async (req, res) => {
@@ -35,8 +38,7 @@ router.post('/package', async (req, res) => {
 
     if ((Content && URL) || (!Content && !URL)) {
       res.status(400).json({
-        message: 'Either Content or URL must be provided, but not both',
-      });
+        message: 'Either Content or URL must be provided, but not both' });
       return;
     }
 
@@ -60,9 +62,9 @@ router.post('/package', async (req, res) => {
     } else if (URL) {
       // Fetch package from URL
       try {
-        // Copy the version and Name from the URL.
+        // Copy the version and Name from the URL
         if (!Name || !Version) {
-          const {extractedName, extractedVersion} = await extractNameAndVersionFromURL(URL);
+          const { extractedName, extractedVersion } = await extractNameAndVersionFromURL(URL);
           packageName = extractedName || packageName;
           packageVersion = extractedVersion || packageVersion;
         }
@@ -93,31 +95,9 @@ router.post('/package', async (req, res) => {
       packageBuffer = await processPackage(packageBuffer);
     }
 
-    /*
-    // IF USING INTERNAL AUTHENTICATION
-    // Authentication middleware
-    app.use((req, res, next) => {
-      const token = req.headers['authenticationtoken'];
-      if (!token || !isValidToken(token)) {
-        return res.status(403).json({ message: 'Invalid or missing AuthenticationToken' });
-      }
-      next();
-    });
-
-    const isInternalUser = checkIfInternalUser(req.headers['authenticationtoken']);
-    if (!isInternalUser) {
-      const rating = await ratePackage(packageBuffer);
-      if (rating < 0.5) {
-        res.status(424).json({ message: 'Package is not uploaded due to the disqualified rating.' });
-        return;
-      }
-    }
-    */
-
-    // Rate the package (NOT USING INTERNAL AUTHENTICATION)
+    // Rate the package
     const rating = await ratePackage(packageBuffer);
     if (rating < 0.5) {
-      // Assuming 0.5 as disqualification threshold
       res.status(424).json({
         message: 'Package is not uploaded due to the disqualified rating.',
       });
@@ -129,59 +109,51 @@ router.post('/package', async (req, res) => {
 
     // Check if package already exists
     try {
-      await s3Client.send(
-        new HeadObjectCommand({
-          Bucket: process.env.AWS_S3_BUCKET_NAME as string,
-          Key: `${packageID}.tgz`,
-        })
+      const [existing] = await db_connection.execute(
+        'SELECT id FROM packages WHERE id = ?',
+        [packageID]
       );
-      res.status(409).json({ message: 'Package already exists.' });
-      return;
-    } catch (error: any) {
-      if (error.name !== 'NotFound' && error.$metadata?.httpStatusCode !== 404) {
-        console.error('Error checking package existence:', error);
-        res.status(500).json({ message: 'Server error' });
+
+      if (Array.isArray(existing) && existing.length > 0) {
+        res.status(409).json({ message: 'Package already exists.' });
         return;
       }
-      // If error is NotFound, proceed to upload
+    } catch (error) {
+      console.error('Error checking package existence:', error);
+      res.status(500).json({ message: 'Server error' });
+      return;
     }
 
-    // Upload to AWS S3
-    const params = {
-      Bucket: process.env.AWS_S3_BUCKET_NAME as string,
-      Key: `${packageID}.tgz`,
-      Body: packageBuffer,
-      ContentType: 'application/gzip',
-    };
-
+    // Insert into database
     try {
-      await s3Client.send(new PutObjectCommand(params));
+      await db_connection.execute(
+        'INSERT INTO packages (id, package_name, package_version, content, url, js_program, debloat) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [
+          packageID,
+          packageName,
+          packageVersion,
+          packageBuffer,
+          URL || null,
+          JSProgram || null,
+          debloat
+        ]
+      );
     } catch (error) {
-      console.error('Error uploading package:', error);
+      console.error('Error inserting package:', error);
       res.status(500).json({ message: 'Server error during upload' });
       return;
     }
-
-    const packageMetadata = {
-      Name: packageName,
-      Version: packageVersion,
-      ID: packageID,
-      Source: Content ? 'Content' : 'URL',
-    };
-
-    // Save packageMetadata in metadata storage
-    await savePackageMetadata(packageMetadata);
     
     // Build the response object
     const response = {
       metadata: {
-        Name : packageName,
-        Version : packageVersion,
-        ID : packageID,
+        Name: packageName,
+        Version: packageVersion,
+        ID: packageID,
       },
       data: {
-        ...(Content ? { Content : packageBuffer.toString('base64') } : {}),
-        ...(URL ? { URL : URL } : {}),
+        ...(Content ? { Content: packageBuffer.toString('base64') } : {}),
+        ...(URL ? { URL: URL } : {}),
         JSProgram,
       },
     };
