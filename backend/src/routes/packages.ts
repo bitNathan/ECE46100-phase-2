@@ -35,7 +35,7 @@ router.post('/packages', async (req, res) => {
       packageId,
       version
     } = req.body;
-    const offset = req.query.offset || 1;
+    const offset = req.query.offset || 0;
     const offsetInt = parseInt(offset as string, 10);
     
     const pageSize = 10;
@@ -63,21 +63,31 @@ router.post('/packages', async (req, res) => {
     }
 
     const [rows] = await db_connection.execute(query, queryParams);
-    console.log("result", rows, query, queryParams)
+    console.log("result", rows)
 
-    // pagination
-    for (let i = 0; i < offsetInt; i++) {
-      rows.splice(0, pageSize);
-    }
+    // Map rows to handle buffer and simplify response
+    const formattedRows = rows.map((row: any) => ({
+      id: row.id,
+      package_version: row.package_version,
+      package_name: row.package_name,
+      content: row.content.toString('base64'), // Encoding content as Base64 string
+      url: row.url,
+      js_program: row.js_program,
+      debloat: row.debloat === 1
+    }));
+
+  
+    // Pagination logic
+    const paginatedRows = formattedRows.slice(offsetInt * pageSize, (offsetInt * pageSize) + pageSize);
 
     // Check if there are any packages
-    if (!rows.length) {
+    if (!paginatedRows.length) {
       res.status(404).json({message: 'No packages found'});
       return;
     }
 
-    // return pageSize packages
-    res.status(200).json(rows.splice(0, pageSize));
+    res.status(200).json(paginatedRows);
+
   } catch (error) {
     console.error('Error fetching registry items:', error);
     res.status(500).json({ message: 'Server Error fetching registry items' });
