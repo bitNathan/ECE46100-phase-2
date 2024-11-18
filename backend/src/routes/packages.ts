@@ -47,17 +47,17 @@ router.post('/packages', async (req, res) => {
       if (version.includes('-')) {
         // Bounded range: "1.2.3-2.1.0"
         const [minVersion, maxVersion] = version.split('-');
-        query += ' AND version >= ? AND version <= ?';
+        query += ' AND package_version >= ? AND package_version <= ?';
         queryParams.push(minVersion, maxVersion);
       } else if (version.startsWith('~') || version.startsWith('^')) {
         // Tilde and Caret ranges
-        query += ' AND version LIKE ?';
+        query += ' AND package_version LIKE ?';
         let modifiedVersion = version.slice(1); // Remove the tilde or caret
         modifiedVersion = modifiedVersion.replace(/\d+$/, '%'); // Replace the last numeric segment with '%'
         queryParams.push(modifiedVersion);
       } else {
         // Exact version
-        query += ' AND version = ?';
+        query += ' AND package_version = ?';
         queryParams.push(version);
       }
     }
