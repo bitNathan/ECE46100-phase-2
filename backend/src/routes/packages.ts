@@ -32,16 +32,38 @@ let db_connection = mysql.Connection;
 router.post('/packages', async (req, res) => {
   try {
     const {
-      Version,
-      Name
+      packageId,
+      version
     } = req.body;
     const offset = req.query.offset || 1;
     const offsetInt = parseInt(offset as string, 10);
     
     const pageSize = 10;
-    // TODO version filtering
-    // TODO name filtering
-    const [rows] = await db_connection.execute('SELECT * FROM packages');
+    let query = 'SELECT * FROM packages WHERE package_name = ?';
+    let queryParams = [packageId];
+
+    // Handle version filtering if specified
+    if (version) {
+      if (version.includes('-')) {
+        // Bounded range: "1.2.3-2.1.0"
+        const [minVersion, maxVersion] = version.split('-');
+        query += ' AND version >= ? AND version <= ?';
+        queryParams.push(minVersion, maxVersion);
+      } else if (version.startsWith('~') || version.startsWith('^')) {
+        // Tilde and Caret ranges
+        query += ' AND version LIKE ?';
+        let modifiedVersion = version.slice(1); // Remove the tilde or caret
+        modifiedVersion = modifiedVersion.replace(/\d+$/, '%'); // Replace the last numeric segment with '%'
+        queryParams.push(modifiedVersion);
+      } else {
+        // Exact version
+        query += ' AND version = ?';
+        queryParams.push(version);
+      }
+    }
+
+    const [rows] = await db_connection.execute(query, queryParams);
+    console.log("result", rows, query, queryParams)
 
     // pagination
     for (let i = 0; i < offsetInt; i++) {
