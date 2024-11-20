@@ -1,6 +1,7 @@
 import express from 'express';
 import packagesRouter from './routes/packages';
 import packageRouter from './routes/package';
+import resetRouter from './routes/reset';
 import cors from 'cors';
 const app = express();
 
@@ -13,6 +14,7 @@ app.use(express.json({ limit: '100mb' }));
 // Use the package router
 app.use('/', packageRouter);
 app.use('/', packagesRouter);
+app.use('/', resetRouter);
 
 // Start the server
 const PORT = process.env.PORT || 3000;
