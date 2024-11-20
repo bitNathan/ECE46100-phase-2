@@ -19,28 +19,21 @@ interface PackageRating {
   };
 }
 
-export const packageRateHandler = async (id: string, authToken: string): Promise<any> => {
+export const packageRateHandler = async (id: string): Promise<any> => {
   if (!id) {
-    return { 
-      statusCode: 400, 
-      body: JSON.stringify({ error: 'Missing field(s) in PackageID' }) 
-    };
-  }
-
-  if (!authToken) {
-    return { 
-      statusCode: 403, 
-      body: JSON.stringify({ error: 'Authentication failed due to invalid or missing AuthenticationToken' }) 
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: 'Missing field(s) in PackageID' })
     };
   }
 
   try {
     // Query detailed package metadata
     const [rows] = await db.promise().query(
-      `SELECT 
-        p.*, 
-        GROUP_CONCAT(d.dependency_name, ':', d.version) as dependencies,
-        cr.status as code_review_status
+      `SELECT
+       p.*,
+       GROUP_CONCAT(d.dependency_name, ':', d.version) as dependencies,
+       cr.status as code_review_status
        FROM PackageMetadata p
        LEFT JOIN PackageDependencies d ON p.id = d.package_id
        LEFT JOIN CodeReviews cr ON p.id = cr.package_id
@@ -54,9 +47,9 @@ export const packageRateHandler = async (id: string, authToken: string): Promise
     }
 
     if (rows.length === 0) {
-      return { 
-        statusCode: 404, 
-        body: JSON.stringify({ error: 'Package does not exist' }) 
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: 'Package does not exist' })
       };
     }
 
@@ -64,22 +57,21 @@ export const packageRateHandler = async (id: string, authToken: string): Promise
     const rating = computePackageRating(packageData);
 
     if (!rating) {
-      return { 
-        statusCode: 500, 
-        body: JSON.stringify({ error: 'The package rating system choked on at least one of the metrics' }) 
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'The package rating system choked on at least one of the metrics' })
       };
     }
 
-    return { 
-      statusCode: 200, 
-      body: JSON.stringify({ rating }) 
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ rating })
     };
-
   } catch (err) {
     console.error('Error:', err instanceof Error ? err.message : 'Unknown error');
-    return { 
-      statusCode: 500, 
-      body: JSON.stringify({ error: 'Internal Server Error' }) 
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Internal Server Error' })
     };
   }
 };
