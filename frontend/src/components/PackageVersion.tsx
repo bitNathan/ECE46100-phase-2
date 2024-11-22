@@ -10,11 +10,6 @@ const PackageVersion: React.FC = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!packageName) {
-      alert('Please provide the package name!');
-      return;
-    }
-
     try {
       await fetchPackageVersion(packageName, version);
       alert('Package version fetched successfully!');

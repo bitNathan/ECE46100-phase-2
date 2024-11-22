@@ -39,8 +39,14 @@ router.post('/packages', async (req, res) => {
     const offsetInt = parseInt(offset as string, 10);
     
     const pageSize = 10;
-    let query = 'SELECT * FROM packages WHERE package_name = ?';
-    let queryParams = [packageId];
+    let query = 'SELECT * FROM packages';
+    let queryParams: any[] = [];
+
+    // get packageId if specified
+    if (packageId){
+      query += ' WHERE package_name = ?';
+      queryParams = [packageId];
+    }
 
     // Handle version filtering if specified
     if (version) {
