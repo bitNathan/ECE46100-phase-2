@@ -11,7 +11,7 @@ const SearchPackagesByRegex: React.FC = () => {
 
     try {
       await getPackagesByRegEx(regex);
-      alert('Package fetched successfully!');
+      alert('Packages fetched successfully!');
     } catch (error) {
       console.error('Error fetching package:', error);
     }
