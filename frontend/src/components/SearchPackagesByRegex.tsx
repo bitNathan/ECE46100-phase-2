@@ -13,7 +13,7 @@ const SearchPackagesByRegex: React.FC = () => {
       await getPackagesByRegEx(regex);
       alert('Package fetched successfully!');
     } catch (error) {
-      console.error('Error uploading package:', error);
+      console.error('Error fetching package:', error);
     }
   };
 
