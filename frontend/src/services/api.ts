@@ -180,12 +180,23 @@ export const getPackageCost = async (packageId: string) => {
 };
 
 export const getPackagesByRegEx = async (regex: string) => {
+  const requestData: any = {
+    regex
+  }
   try {
-    const response = await axios.get(`${API_BASE_URL}/package/byRegEx`, { params: { regex } });
+    const response = await axios.get(`${API_BASE_URL}/package/byRegEx`, requestData);
     return response.data;
   } catch (error) {
-    console.error('Error fetching packages by regex:', error);
-    return [];
+    if (axios.isAxiosError(error)) {
+      const statusCode = error.response?.status;
+      const errorMessage = error.response?.data?.message || 'An unknown error occurred';
+  
+      alert(`Error: ${errorMessage} (Status Code: ${statusCode})`);
+      console.error('Error fetching packages by regex:', error);
+  
+    } else {
+      console.error('Error: Failed to connect to the server.');
+    }
   }
 };
 

@@ -5,6 +5,7 @@ import UploadForm from './components/UploadForm';
 import PackageList from './components/PackageList';
 import PackageVersion from './components/PackageVersion';
 import DownloadPackage from './components/DownloadPackage';
+import SearchPackagesByRegex from './components/SearchPackagesByRegex';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('UploadForm');
@@ -50,6 +51,8 @@ const App: React.FC = () => {
           }}
         >
           Download Package
+        <div onClick={() => setActiveTab('SearchPackagesByRegex')} style={{ padding: '10px', borderBottom: activeTab === 'SearchPackagesByRegex' ? '2px solid blue' : 'none' }}>
+          Search Packages
         </div>
       </div>
 
@@ -59,6 +62,7 @@ const App: React.FC = () => {
         {activeTab === 'PackageList' && <PackageList />}
         {activeTab === 'PackageVersion' && <PackageVersion />}
         {activeTab === 'DownloadPackage' && <DownloadPackage />}
+        {activeTab === 'SearchPackagesByRegex' && <SearchPackagesByRegex />}
       </div>
     </div>
   );
