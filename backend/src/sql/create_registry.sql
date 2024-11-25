@@ -7,5 +7,6 @@ CREATE TABLE packages (
     content LONGBLOB,
     url VARCHAR(255),
     js_program TEXT,
-    debloat BOOLEAN
+    debloat BOOLEAN,
+    readme TEXT
 );
