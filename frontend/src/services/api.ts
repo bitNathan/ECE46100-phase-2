@@ -18,15 +18,28 @@ export const getPackages = async () => {
   }
 };
 
-export const fetchPackageVersion = async (packageId: string) => {
+export const fetchPackageVersion = async (packageId: string, version: string) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/package/${packageId}`);
+    const requestData: any = {
+      packageId,
+      version,
+    };
+
+    const response = await axios.post(`${API_BASE_URL}/packages`, requestData);
     return response.data;
   } catch (error) {
-    console.error('Error fetching package:', error);
-    return null;
+    if (axios.isAxiosError(error)) {
+      const statusCode = error.response?.status;
+      const errorMessage = error.response?.data?.message || 'An unknown error occurred';
+
+      alert(`Error: ${errorMessage} (Status Code: ${statusCode})`);
+
+    } else {
+      console.error('Error: Failed to connect to the server.');
+    }
   }
 }
+
 export const uploadPackage = async (
   name: string,
   content: string | null,
