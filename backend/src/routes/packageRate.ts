@@ -1,124 +1,170 @@
-import db from './connection';
+import express, { Request, Response } from 'express';
+import { Router } from 'express';
+import dbConnectionPromise from './db';
+import { getBusFactor } from '../bus_factor';
+import { getCorrectness } from '../correctness';
+import { calculateTotalTimeFromRepo } from '../ramp_up_metric';
+import { getResponsive } from '../responsive_maintainer';
+import { getLicense } from '../license';
+import { getDependencies } from '../dependency_parser';
+import { getPullRequestCodeReview } from '../pull_request_code_review';
+import { parseURL } from '../url_parse';
 
-interface PackageMetadata {
-  id: string;
-  name: string;
-  version: string;
-  upload_type: string;
-  dependencies?: string;
-  code_review_status?: string;
-  created_at: Date;
-  updated_at: Date;
-}
+const router: Router = express.Router();
 
-interface PackageRating {
-  score: number;
-  metrics: {
-    dependencyPinning: number;
-    codeReview: number;
-  };
-}
-
-export const packageRateHandler = async (id: string): Promise<any> => {
-  if (!id) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({ error: 'Missing field(s) in PackageID' })
-    };
-  }
-
+// Separate handler function for testing
+export const packageRateHandler = async (packageId: string) => {
   try {
-    // Query detailed package metadata
-    const [rows] = await db.promise().query(
-      `SELECT
-       p.*,
-       GROUP_CONCAT(d.dependency_name, ':', d.version) as dependencies,
-       cr.status as code_review_status
-       FROM PackageMetadata p
-       LEFT JOIN PackageDependencies d ON p.id = d.package_id
-       LEFT JOIN CodeReviews cr ON p.id = cr.package_id
-       WHERE p.id = ?
-       GROUP BY p.id`,
-      [id]
-    );
-
-    if (!Array.isArray(rows)) {
-      throw new Error('Invalid database response format');
+    // Validate package ID
+    if (!packageId) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Missing field(s) in PackageID' })
+      };
     }
 
-    if (rows.length === 0) {
+    // Validate package ID format
+    if (!/^[a-zA-Z0-9\-]+$/.test(packageId)) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: 'Invalid PackageID format' })
+      };
+    }
+
+    // Get package from database
+    const db_connection = await dbConnectionPromise;
+    const query = 'SELECT * FROM packages WHERE id = $1';
+    const result = await db_connection.execute(query, [packageId]);
+
+    if (!result.rows || result.rows.length === 0) {
       return {
         statusCode: 404,
         body: JSON.stringify({ error: 'Package does not exist' })
       };
     }
 
-    const packageData = rows[0] as PackageMetadata;
-    const rating = computePackageRating(packageData);
+    const packageData = result.rows[0];
+    let owner = '';
+    let repo = '';
 
-    if (!rating) {
+    if (packageData.url) {
+      [owner, repo] = await parseURL(packageData.url);
+    }
+
+    if (!owner || !repo) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'The package rating system choked on at least one of the metrics' })
+        body: JSON.stringify({ error: 'Invalid repository URL' })
       };
     }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ rating })
-    };
-  } catch (err) {
-    console.error('Error:', err instanceof Error ? err.message : 'Unknown error');
+    const start = Date.now();
+    const repoUrl = `https://github.com/${owner}/${repo}`;
+
+    try {
+      const [
+        busFactorResult,
+        correctnessResult,
+        rampUpResult,
+        responsiveMaintainerResult,
+        licenseResult,
+        pullRequestResult,
+        dependencies
+      ] = await Promise.all([
+        getBusFactor(owner, repo),
+        getCorrectness(owner, repo),
+        calculateTotalTimeFromRepo(repoUrl),
+        getResponsive(owner, repo),
+        getLicense(owner, repo),
+        getPullRequestCodeReview(owner, repo),
+        getDependencies(owner, repo)
+      ]);
+
+      // Calculate GoodPinningPractice
+      const goodPinningPractice = dependencies.length === 0 ? 1.0 :
+        dependencies.filter(dep => {
+          const version = dep.version;
+          const cleanVersion = version.replace(/^[^0-9]*/, '');
+          return /^\d+\.\d+(\.\d+)?$/.test(cleanVersion) &&
+                 !version.includes('^') &&
+                 !version.includes('~') &&
+                 !version.endsWith('x') &&
+                 !version.endsWith('*');
+        }).length / dependencies.length;
+
+      // Format metrics
+      const metrics = {
+        RampUp: Number((Array.isArray(rampUpResult) ? rampUpResult[0] : rampUpResult).toFixed(5)),
+        Correctness: Number((Array.isArray(correctnessResult) ? correctnessResult[0] : correctnessResult).toFixed(5)),
+        BusFactor: Number((Array.isArray(busFactorResult) ? busFactorResult[0] : busFactorResult).toFixed(5)),
+        ResponsiveMaintainer: Number((Array.isArray(responsiveMaintainerResult) ? responsiveMaintainerResult[0] : responsiveMaintainerResult).toFixed(5)),
+        LicenseScore: Number((Array.isArray(licenseResult) ? licenseResult[0] : licenseResult).toFixed(5)),
+        GoodPinningPractice: Number(goodPinningPractice.toFixed(5)),
+        PullRequest: Number((Array.isArray(pullRequestResult) ? pullRequestResult[0] : pullRequestResult).toFixed(5))
+      };
+
+      // Check for failed metrics
+      if (Object.values(metrics).some(metric => metric === -1)) {
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: 'The package rating system failed on at least one metric' })
+        };
+      }
+
+      // Calculate NetScore
+      const weights = {
+        RampUp: 0.2,
+        Correctness: 0.2,
+        BusFactor: 0.1,
+        ResponsiveMaintainer: 0.2,
+        LicenseScore: 0.1,
+        GoodPinningPractice: 0.1,
+        PullRequest: 0.1
+      };
+
+      const netScore = Object.entries(metrics).reduce(
+        (sum, [key, value]) => sum + value * weights[key as keyof typeof weights],
+        0
+      );
+
+      const endTime = Date.now();
+      const latency = (endTime - start) / 1000;
+
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          ...metrics,
+          NetScore: Number(netScore.toFixed(5)),
+          RampUpLatency: latency,
+          CorrectnessLatency: latency,
+          BusFactorLatency: latency,
+          ResponsiveMaintainerLatency: latency,
+          LicenseScoreLatency: latency,
+          GoodPinningPracticeLatency: latency,
+          PullRequestLatency: latency,
+          NetScoreLatency: latency
+        })
+      };
+
+    } catch (error) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Rating system failed' })
+      };
+    }
+  } catch (error) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal Server Error' })
+      body: JSON.stringify({ error: 'Internal server error' })
     };
   }
 };
 
-function computePackageRating(packageData: PackageMetadata): PackageRating | null {
-  try {
-    // Compute dependency pinning score
-    let dependencyPinning = 1.0;
-    if (packageData.dependencies) {
-      const deps = packageData.dependencies.split(',');
-      const unpinnedDeps = deps.filter(dep => {
-        const [_, version] = dep.split(':');
-        return version.startsWith('^') || version.startsWith('~') || version === '*';
-      });
-      dependencyPinning = 1 - (unpinnedDeps.length / deps.length);
-    }
+// Express route handler
+router.get('/package/:id/rate', async (req: Request, res: Response) => {
+  const packageId = req.params.id;
+  const response = await packageRateHandler(packageId);
+  res.status(response.statusCode).send(response.body);
+});
 
-    // Compute code review score
-    let codeReview = 0.0;
-    if (packageData.code_review_status) {
-      switch (packageData.code_review_status.toLowerCase()) {
-        case 'approved':
-          codeReview = 1.0;
-          break;
-        case 'pending_changes':
-          codeReview = 0.5;
-          break;
-        case 'in_review':
-          codeReview = 0.3;
-          break;
-        default:
-          codeReview = 0.0;
-      }
-    }
-
-    // Compute overall score (weighted average)
-    const score = (dependencyPinning * 0.6) + (codeReview * 0.4);
-
-    return {
-      score: Number(score.toFixed(2)),
-      metrics: {
-        dependencyPinning: Number(dependencyPinning.toFixed(2)),
-        codeReview: Number(codeReview.toFixed(2)),
-      },
-    };
-  } catch (error) {
-    console.error('Error computing rating:', error);
-    return null;
-  }
-}
+export default router;

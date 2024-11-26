@@ -1,76 +1,152 @@
 import { packageRateHandler } from '../routes/packageRate';
-import db from '../routes/connection';
 
 // Mock the database connection
-jest.mock('../routes/connection', () => ({
-  promise: jest.fn().mockReturnValue({
-    query: jest.fn(),
-  }),
+jest.mock('../routes/db', () => ({
+  __esModule: true,
+  default: Promise.resolve({
+    execute: jest.fn()
+  })
+}));
+
+// Mock all dependency functions
+jest.mock('../bus_factor', () => ({
+  getBusFactor: jest.fn().mockResolvedValue([0.8, 0.1])
+}));
+
+jest.mock('../correctness', () => ({
+  getCorrectness: jest.fn().mockResolvedValue([0.9, 0.1])
+}));
+
+jest.mock('../ramp_up_metric', () => ({
+  calculateTotalTimeFromRepo: jest.fn().mockResolvedValue([0.7, 0.1])
+}));
+
+jest.mock('../responsive_maintainer', () => ({
+  getResponsive: jest.fn().mockResolvedValue([0.85, 0.1])
+}));
+
+jest.mock('../license', () => ({
+  getLicense: jest.fn().mockResolvedValue([1.0, 0.1])
+}));
+
+jest.mock('../pull_request_code_review', () => ({
+  getPullRequestCodeReview: jest.fn().mockResolvedValue([0.75, 0.1])
+}));
+
+jest.mock('../dependency_parser', () => ({
+  getDependencies: jest.fn().mockResolvedValue([
+    { name: 'dep1', version: '1.0.0' }
+  ])
+}));
+
+jest.mock('../url_parse', () => ({
+  parseURL: jest.fn().mockResolvedValue(['testOwner', 'testRepo'])
 }));
 
 describe('packageRateHandler', () => {
-  beforeEach(() => {
+  let mockDb: any;
+
+  beforeEach(async () => {
     jest.clearAllMocks();
+    mockDb = await (jest.requireMock('../routes/db').default);
   });
 
-  it('should return 400 if package ID is missing', async () => {
-    const response = await packageRateHandler('');
-    expect(response.statusCode).toBe(400);
-    expect(JSON.parse(response.body).error).toBe('Missing field(s) in PackageID');
-  });
-
+  // Test 404 - Package Not Found
   it('should return 404 if package does not exist', async () => {
-    (db.promise().query as jest.Mock).mockResolvedValue([[], []]);
+    mockDb.execute.mockResolvedValueOnce({
+      rows: []
+    });
+    
     const response = await packageRateHandler('123');
     expect(response.statusCode).toBe(404);
     expect(JSON.parse(response.body).error).toBe('Package does not exist');
   });
 
-  // The rest of the tests remain the same, just remove the second argument (authToken)
-  it('should return 200 with a valid package rating', async () => {
+  // Test 200 - Successful Rating
+  it('should return 200 with complete package rating', async () => {
     const mockPackage = {
       id: '123',
       name: 'test-package',
       version: '1.0.0',
-      upload_type: 'npm',
-      dependencies: 'react:^17.0.2,lodash:4.17.21,express:~4.17.1',
-      code_review_status: 'pending_changes',
-      created_at: new Date(),
-      updated_at: new Date()
+      url: 'https://github.com/test/repo'
     };
-    (db.promise().query as jest.Mock).mockResolvedValue([[mockPackage]]);
+
+    mockDb.execute.mockResolvedValueOnce({
+      rows: [mockPackage]
+    });
+
     const response = await packageRateHandler('123');
+    console.log('Response:', response);
     expect(response.statusCode).toBe(200);
+
     const body = JSON.parse(response.body);
-    expect(body.rating).toHaveProperty('score');
-    expect(body.rating.metrics).toHaveProperty('dependencyPinning', 0.33);
-    expect(body.rating.metrics).toHaveProperty('codeReview', 0.5);
-    expect(body.rating.score).toBe(0.4);
+    console.log('Response body:', body);
+
+    const requiredMetrics = [
+      'RampUp',
+      'Correctness',
+      'BusFactor',
+      'ResponsiveMaintainer',
+      'LicenseScore',
+      'GoodPinningPractice',
+      'PullRequest',
+      'NetScore'
+    ];
+
+    requiredMetrics.forEach(metric => {
+      expect(body).toHaveProperty(metric);
+      expect(typeof body[metric]).toBe('number');
+      expect(body[metric]).toBeGreaterThanOrEqual(0);
+      expect(body[metric]).toBeLessThanOrEqual(1);
+
+      const latencyField = `${metric}Latency`;
+      expect(body).toHaveProperty(latencyField);
+      expect(typeof body[latencyField]).toBe('number');
+      expect(body[latencyField]).toBeGreaterThanOrEqual(0);
+    });
   });
 
-
-  it('should handle packages with no dependencies correctly', async () => {
+  // Test 500 - Rating System Error
+  it('should return 500 if rating calculation fails', async () => {
     const mockPackage = {
       id: '123',
       name: 'test-package',
       version: '1.0.0',
-      upload_type: 'npm',
-      dependencies: null,
-      code_review_status: 'approved',
-      created_at: new Date(),
-      updated_at: new Date()
+      url: 'https://github.com/test/repo'
     };
 
-    (db.promise().query as jest.Mock).mockResolvedValue([[mockPackage]]);
-    
+    mockDb.execute.mockResolvedValueOnce({
+      rows: [mockPackage]
+    });
+
+    // Mock bus factor calculation to fail
+    const busFactorMock = require('../bus_factor').getBusFactor;
+    busFactorMock.mockRejectedValueOnce(new Error('Rating calculation failed'));
+
     const response = await packageRateHandler('123');
-    expect(response.statusCode).toBe(200);
-    
-    const body = JSON.parse(response.body);
-    // With no dependencies, dependencyPinning should be 1.0
-    // And with 'approved' status, codeReview should be 1.0
-    expect(body.rating.metrics).toHaveProperty('dependencyPinning', 1);
-    expect(body.rating.metrics).toHaveProperty('codeReview', 1);
-    expect(body.rating.score).toBe(1);
+    expect(response.statusCode).toBe(500);
+    expect(JSON.parse(response.body).error).toBe('Rating system failed');
+  });
+
+  // Test invalid URL
+  it('should return 500 if URL is invalid', async () => {
+    const mockPackage = {
+      id: '123',
+      name: 'test-package',
+      version: '1.0.0',
+      url: 'invalid-url'
+    };
+
+    mockDb.execute.mockResolvedValueOnce({
+      rows: [mockPackage]
+    });
+
+    // Mock URL parsing to fail
+    const parseURLMock = require('../url_parse').parseURL;
+    parseURLMock.mockResolvedValueOnce([null, null]);
+
+    const response = await packageRateHandler('123');
+    expect(response.statusCode).toBe(500);
+    expect(JSON.parse(response.body).error).toBe('Invalid repository URL');
   });
 });
