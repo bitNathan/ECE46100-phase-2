@@ -16,14 +16,6 @@ let db_connection = mysql.Connection;
     });
     // console.log('Database connection established successfully');
   } catch (error) {
-    // Log the environment variables to ensure they are being read correctly
-    console.log('Database configuration:', {
-      host: process.env.AWS_RDS_ENDPOINT,
-      user: process.env.AWS_RDS_USERNAME, 
-      password: process.env.AWS_RDS_PASSWORD,
-      port: process.env.AWS_RDS_PORT,
-      database: process.env.AWS_RDS_DATABASE_NAME
-    });
     console.error('Error connecting to the database:', error);
   }
 })();
