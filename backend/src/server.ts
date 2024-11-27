@@ -1,7 +1,9 @@
 import express from 'express';
 import packagesRouter from './routes/packages';
+import resetRouter from './routes/reset';
 import uploadPackageRouter from './routes/uploadPackage';
 import downloadPackageRouter from './routes/downloadPackage';
+
 import cors from 'cors';
 const app = express();
 
@@ -15,6 +17,7 @@ app.use(express.json({ limit: '100mb' }));
 app.use('/', uploadPackageRouter);
 app.use('/', downloadPackageRouter);
 app.use('/', packagesRouter);
+app.use('/', resetRouter);
 
 // Start the server
 const PORT = process.env.PORT || 3000;
