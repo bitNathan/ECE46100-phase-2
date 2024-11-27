@@ -9,8 +9,13 @@ const PackageVersion: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    await fetchPackageVersion(packageName);
-    alert('Package version fetched successfully!');
+
+    try {
+      await fetchPackageVersion(packageName, version);
+      alert('Package version fetched successfully!');
+    } catch (error) {
+      console.error('Error uploading package:', error);
+    }
   };
 
   return (
