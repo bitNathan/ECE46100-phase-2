@@ -50,7 +50,8 @@ router.post('/package', async (req, res) => {
     let packageBuffer: Buffer | null = null;
     let packageName = Name;
     let packageVersion = Version;
-
+    let readmeContent: string | null = null; 
+    
     if (Content) {
       // Decode Base64 Content
       try {
@@ -65,27 +66,51 @@ router.post('/package', async (req, res) => {
         // Fetch the package buffer
         const resolvedURL = await resolveURL(URL);
         const {owner, repo} = await getOwnerAndRepoFromURL(resolvedURL);
+
+        const repoInfoUrl = `https://api.github.com/repos/${owner}/${repo}`;
+        const repoInfoResponse = await axios.get(repoInfoUrl);
+        const branch = repoInfoResponse.data.default_branch;
+
         let axiosResponse = null;
+
+        // Fetch the package zip archive
         try {
-          const githubZipUrl = `https://github.com/${owner}/${repo}/archive/main.zip`;
+          const githubZipUrl = `https://github.com/${owner}/${repo}/archive/${branch}.zip`;
           axiosResponse = await axios.get(githubZipUrl, {
             responseType: 'arraybuffer',
           });
         } catch (error) {
-          try {
-            const githubZipUrl = `https://github.com/${owner}/${repo}/archive/master.zip`;
-            axiosResponse = await axios.get(githubZipUrl, {
-              responseType: 'arraybuffer',
-            });
-          } catch (error) {
-            res.status(400).json({ message: 'Error fetching package from URL' });
-            return;
-          }
+          res.status(400).json({ message: 'Error fetching package from URL' });
+          return;
         }
 
         // Convert the zip archive to a buffer
         packageBuffer = Buffer.from(axiosResponse.data);
-        
+
+        // Fetch README file
+        let readmeResponse = null;
+        try {
+          const readmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/README.md`;
+          readmeResponse = await axios.get(readmeUrl);
+          if (readmeResponse && readmeResponse.status === 200) {
+            readmeContent = readmeResponse.data;
+          } else {
+            console.warn('README.md not found in the repository root');
+          }
+        } catch (error) { // try readme.md
+          try {
+            const readmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/readme.md`;
+            readmeResponse = await axios.get(readmeUrl);
+            if (readmeResponse && readmeResponse.status === 200) {
+              readmeContent = readmeResponse.data;
+            } else {
+              console.warn('README.md not found in the repository root');
+            }
+          } catch (error) {
+            console.warn('Error fetching README.md:', error);
+          }
+        }
+
         // Copy the version and Name from the URL
         if (!Name || !Version) {
           const { extractedName, extractedVersion } = await extractNameAndVersionFromURL(URL);
@@ -145,7 +170,7 @@ router.post('/package', async (req, res) => {
     // Insert into database
     try {
       await db_connection.execute(
-        'INSERT INTO packages (id, package_name, package_version, content, url, js_program, debloat) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO packages (id, package_name, package_version, content, url, js_program, debloat, readme) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         [
           packageID,
           packageName,
@@ -153,7 +178,8 @@ router.post('/package', async (req, res) => {
           packageBuffer,
           URL || null,
           JSProgram || null,
-          debloat
+          debloat,
+          readmeContent || null
         ]
       );
     } catch (error) {
