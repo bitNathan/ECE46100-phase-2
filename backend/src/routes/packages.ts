@@ -1,5 +1,7 @@
 import express from 'express';
 const mysql = require('mysql2/promise');
+import dotenv from 'dotenv';
+dotenv.config();
 
 const router = express.Router();
 
@@ -8,22 +10,14 @@ let db_connection = mysql.Connection;
 (async () => {
   try {
       db_connection = await mysql.createConnection({
-      host: process.env.AWS_RDS_ENDPOINT,
-      user: process.env.AWS_RDS_USERNAME, 
-      password: process.env.AWS_RDS_PASSWORD, 
-      database: process.env.AWS_RDS_DATABASE_NAME,
-      port: parseInt(process.env.AWS_RDS_PORT as string, 10)
+      host: process.env.DB_HOST,
+      user: process.env.DB_USER,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      port: parseInt(process.env.DB_PORT as string, 10)
     });
     // console.log('Database connection established successfully');
   } catch (error) {
-    // Log the environment variables to ensure they are being read correctly
-    console.log('Database configuration:', {
-      host: process.env.AWS_RDS_ENDPOINT,
-      user: process.env.AWS_RDS_USERNAME, 
-      password: process.env.AWS_RDS_PASSWORD,
-      port: process.env.AWS_RDS_PORT,
-      database: process.env.AWS_RDS_DATABASE_NAME
-    });
     console.error('Error connecting to the database:', error);
   }
 })();
@@ -69,7 +63,6 @@ router.post('/packages', async (req, res) => {
     }
 
     const [rows] = await db_connection.execute(query, queryParams);
-    console.log("result", rows)
 
     // Map rows to handle buffer and simplify response
     const formattedRows = rows.map((row: any) => ({
