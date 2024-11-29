@@ -5,3 +5,7 @@ logs
 dist
 coverage
 *.pem
+*.logs
+*.log
+
+*analysis_output*

@@ -42,8 +42,8 @@ export const packageRateHandler = async (packageId: string) => {
         body: JSON.stringify({ error: 'Package does not exist' })
       };
     }
-
-    const packageData = result[0];
+    // assumes only one package with the given ID
+    const packageData = result[0][0];
     let owner = '';
     let repo = '';
 
@@ -60,25 +60,31 @@ export const packageRateHandler = async (packageId: string) => {
 
     const start = Date.now();
     const repoUrl = `https://github.com/${owner}/${repo}`;
-
+    
+    console.log(`Calculating metrics for ${repoUrl}`);
+    console.log('owner:', owner, 'repo:', repo);
+  
     try {
-      const [
-        busFactorResult,
-        correctnessResult,
-        rampUpResult,
-        responsiveMaintainerResult,
-        licenseResult,
-        pullRequestResult,
-        dependencies
-      ] = await Promise.all([
-        getBusFactor(owner, repo),
-        getCorrectness(owner, repo),
-        calculateTotalTimeFromRepo(repoUrl),
-        getResponsive(owner, repo),
-        getLicense(owner, repo),
-        getPullRequestCodeReview(owner, repo),
-        getDependencies(owner, repo)
-      ]);
+      const busFactorResult = await getBusFactor(owner, repo);
+      console.log('Bus Factor calculation completed');
+
+      const correctnessResult = await getCorrectness(owner, repo);
+      console.log('Correctness calculation completed');
+
+      const rampUpResult = await calculateTotalTimeFromRepo(repoUrl);
+      console.log('Ramp Up calculation completed');
+
+      const responsiveMaintainerResult = await getResponsive(owner, repo);
+      console.log('Responsive Maintainer calculation completed');
+
+      const licenseResult = await getLicense(owner, repo);
+      console.log('License calculation completed');
+
+      const pullRequestResult = await getPullRequestCodeReview(owner, repo);
+      console.log('Pull Request Code Review calculation completed');
+
+      const dependencies = await getDependencies(owner, repo);
+      console.log('Dependencies parsing completed');
 
       // Calculate GoodPinningPractice
       const goodPinningPractice = dependencies.length === 0 ? 1.0 :
