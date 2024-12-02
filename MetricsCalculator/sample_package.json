@@ -1,0 +1,21 @@
+{
+    "name": "461-acme-service",
+    "version": "1.0.0",
+    "description": "Sample project",
+    "main": "index.js",
+    "scripts": {
+      "test": "jest",
+      "build": "npx tsc"
+    },
+    "keywords": [],
+    "author": "John Doe",
+    "license": "MIT",
+    "devDependencies": {
+      "@types/jest": "^29.5.13",
+      "@types/node": "^22.5.2",
+      "acorn": "^8.12.1",
+      "axios": "^1.7.7",
+      "typescript": "^5.5.4"
+    }
+  }
+  
