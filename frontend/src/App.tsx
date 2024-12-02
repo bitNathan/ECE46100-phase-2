@@ -51,11 +51,11 @@ const App: React.FC = () => {
           }}
         >
           Download Package
+        </div>
         <div onClick={() => setActiveTab('SearchPackagesByRegex')} style={{ padding: '10px', borderBottom: activeTab === 'SearchPackagesByRegex' ? '2px solid blue' : 'none' }}>
           Search Packages
         </div>
       </div>
-
       {/* Tab Content */}
       <div style={{ marginTop: '20px' }}>
         {activeTab === 'UploadForm' && <UploadForm />}

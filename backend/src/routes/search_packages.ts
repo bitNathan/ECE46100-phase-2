@@ -5,7 +5,7 @@ const mysql = require('mysql2/promise');
 
 import dbConnectionPromise from './db';
 
-router.post('/package/search/byRegEx', async (req: any, res: any) => {
+router.post('/package/byRegEx', async (req: any, res: any) => {
     const { regex: RegEx } = req.body;
     console.log("Regex is", RegEx)
 

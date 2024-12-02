@@ -184,7 +184,7 @@ export const getPackagesByRegEx = async (regex: string) => {
     regex
   }
   try {
-    const response = await axios.post(`${API_BASE_URL}/package/search/byRegEx`, requestData);
+    const response = await axios.post(`${API_BASE_URL}/package/byRegEx`, requestData);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {

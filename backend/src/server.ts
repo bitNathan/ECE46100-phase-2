@@ -17,11 +17,10 @@ app.use(express.json({ limit: '100mb' }));
 
 // Use the package router
 app.use('/', uploadPackageRouter);
+app.use('/', searchPackagesRouter)
 app.use('/', downloadPackageRouter);
 app.use('/', packagesRouter);
 app.use('/', resetRouter);
-app.use('/', searchPackagesRouter)
-
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
