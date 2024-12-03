@@ -1,8 +1,13 @@
 import express from 'express';
 import packagesRouter from './routes/packages';
-import packageRouter from './routes/package';
+import resetRouter from './routes/reset';
+import uploadPackageRouter from './routes/uploadPackage';
+import downloadPackageRouter from './routes/downloadPackage';
+import searchPackagesRouter from './routes/search_packages';
 import cors from 'cors';
 const app = express();
+
+require('dotenv').config();
 
 // Enable CORS for all routes
 app.use(cors());
@@ -11,9 +16,11 @@ app.use(cors());
 app.use(express.json({ limit: '100mb' }));
 
 // Use the package router
-app.use('/', packageRouter);
+app.use('/', uploadPackageRouter);
+app.use('/', searchPackagesRouter)
+app.use('/', downloadPackageRouter);
 app.use('/', packagesRouter);
-
+app.use('/', resetRouter);
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

@@ -1,5 +1,6 @@
 {
     "dependencies": {
+<<<<<<< HEAD
         "@types/node": "^22.5.2",
         "@types/react": "^18.3.11",
         "@types/react-dom": "^18.3.1",
@@ -19,6 +20,32 @@
         "webpack": "^5.96.1",
         "webpack-cli": "^5.1.4",
         "webpack-dev-server": "^5.1.0"
+=======
+      "@types/node": "^22.5.2",
+      "acorn": "^8.12.1",
+      "acorn-walk": "^8.3.4",
+      "dotenv": "^16.4.5",
+      "axios": "^1.7.7",
+      "react": "^18.2.0",
+      "react-dom": "^18.3.1",
+      "@types/react": "^18.3.11",
+      "@types/react-dom": "^18.3.1",
+      "crypto-js": "^4.2.0"
+    },
+    "devDependencies": {
+      "typescript": "^5.5.4",
+      "ts-loader": "^9.5.1",
+      "jest": "^29.7.0",
+      "ts-jest": "^29.2.5",
+      "@types/jest": "^29.5.13",
+      "webpack": "^5.95.0",
+      "webpack-cli": "^5.1.4",
+      "webpack-dev-server": "^5.1.0",
+      "@types/crypto-js": "^4.2.2"
+    },
+    "browser": {
+      "crypto": false
+>>>>>>> main
     },
     "name": "module-registry-frontend",
     "version": "1.0.0",

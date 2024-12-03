@@ -1,5 +1,6 @@
 // This file contains API calls to interact with the backend.
 import axios from 'axios';
+import * as CryptoJS from 'crypto-js';
 
 // If using proxy, you can use a relative path
 const API_BASE_URL = 'http://localhost:3000';
@@ -78,6 +79,30 @@ export const uploadPackage = async (
   }
 };
 
+export const downloadPackageByNameVersion = async (name: string, version: string) => {
+  try {
+    // Generate the package ID using SHA256(Name + Version)
+    const packageID = CryptoJS.SHA256(name.toLowerCase() + version).toString(CryptoJS.enc.Hex);
+
+    // Fetch the package using the generated package ID
+    const response = await axios.get(`${API_BASE_URL}/package/${packageID}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error downloading package:', error);
+    throw error;
+  }
+};
+
+export const downloadPackage = async (packageID: string) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/package/${packageID}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error downloading package:', error);
+    throw error;
+  }
+};
+
 
 export const updatePackage = async (packageId: string, version: string, file: File) => {
   try {
@@ -102,22 +127,6 @@ export const ratePackage = async (packageId: string) => {
   } catch (error) {
     console.error('Error rating package:', error);
     return null;
-  }
-};
-
-export const downloadPackage = async (packageId: string) => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/package/${packageId}/download`, {
-      responseType: 'blob',
-    });
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${packageId}.zip`);
-    document.body.appendChild(link);
-    link.click();
-  } catch (error) {
-    console.error('Error downloading package:', error);
   }
 };
 
@@ -171,12 +180,23 @@ export const getPackageCost = async (packageId: string) => {
 };
 
 export const getPackagesByRegEx = async (regex: string) => {
+  const requestData: any = {
+    regex
+  }
   try {
-    const response = await axios.get(`${API_BASE_URL}/package/byRegEx`, { params: { regex } });
+    const response = await axios.post(`${API_BASE_URL}/package/byRegEx`, requestData);
     return response.data;
   } catch (error) {
-    console.error('Error fetching packages by regex:', error);
-    return [];
+    if (axios.isAxiosError(error)) {
+      const statusCode = error.response?.status;
+      const errorMessage = error.response?.data?.message || 'An unknown error occurred';
+  
+      alert(`Error: ${errorMessage} (Status Code: ${statusCode})`);
+      console.error('Error fetching packages by regex:', error);
+  
+    } else {
+      console.error('Error: Failed to connect to the server.');
+    }
   }
 };
 
