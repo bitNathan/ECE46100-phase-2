@@ -53,9 +53,7 @@ describe('packageRateHandler', () => {
 
   // Test 404 - Package Not Found
   it('should return 404 if package does not exist', async () => {
-    mockDb.execute.mockResolvedValueOnce({
-      rows: []
-    });
+    mockDb.execute.mockResolvedValueOnce([[]]);
     
     const response = await packageRateHandler('123');
     expect(response.statusCode).toBe(404);
@@ -71,9 +69,7 @@ describe('packageRateHandler', () => {
       url: 'https://github.com/test/repo'
     };
 
-    mockDb.execute.mockResolvedValueOnce({
-      rows: [mockPackage]
-    });
+    mockDb.execute.mockResolvedValueOnce([[mockPackage]]);
 
     const response = await packageRateHandler('123');
     console.log('Response:', response);
@@ -115,9 +111,7 @@ describe('packageRateHandler', () => {
       url: 'https://github.com/test/repo'
     };
 
-    mockDb.execute.mockResolvedValueOnce({
-      rows: [mockPackage]
-    });
+    mockDb.execute.mockResolvedValueOnce([[mockPackage]]);
 
     // Mock bus factor calculation to fail
     const busFactorMock = require('../bus_factor').getBusFactor;
@@ -137,9 +131,7 @@ describe('packageRateHandler', () => {
       url: 'invalid-url'
     };
 
-    mockDb.execute.mockResolvedValueOnce({
-      rows: [mockPackage]
-    });
+    mockDb.execute.mockResolvedValueOnce([[mockPackage]]);
 
     // Mock URL parsing to fail
     const parseURLMock = require('../url_parse').parseURL;

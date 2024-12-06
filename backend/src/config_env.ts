@@ -11,9 +11,9 @@ interface Config
 
 // Create a constant to be used globally, simple config object can be easily accessible across all other scripts
 const config: Config = {
-    GITHUB_TOKEN: process.env.GITHUB_TOKEN as string,
-    LOG_LEVEL: Number(process.env.LOG_LEVEL),
-    LOG_FILE: process.env.LOG_FILE as string
+    GITHUB_TOKEN: process.env.GITHUB_TOKEN as string || 'default_token',
+    LOG_LEVEL: Number(process.env.LOG_LEVEL) || 1,
+    LOG_FILE: process.env.LOG_FILE as string || 'default.log'
 }
 
 if (!config.GITHUB_TOKEN || !config.LOG_LEVEL || !config.LOG_FILE) {
