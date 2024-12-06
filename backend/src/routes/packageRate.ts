@@ -33,17 +33,18 @@ export const packageRateHandler = async (packageId: string) => {
 
     // Get package from database
     const db_connection = await dbConnectionPromise;
-    const query = 'SELECT * FROM packages WHERE id = $1';
+    const query = 'SELECT * FROM packages WHERE id = ?';
     const result = await db_connection.execute(query, [packageId]);
 
-    if (!result.rows || result.rows.length === 0) {
+    if (result[0].length === 0) {
       return {
         statusCode: 404,
         body: JSON.stringify({ error: 'Package does not exist' })
       };
     }
-
-    const packageData = result.rows[0];
+    
+    // assumes only one package with the given ID
+    const packageData = result[0][0];
     let owner = '';
     let repo = '';
 
@@ -147,12 +148,14 @@ export const packageRateHandler = async (packageId: string) => {
       };
 
     } catch (error) {
+      console.error('Error rating package:', error);
       return {
         statusCode: 500,
         body: JSON.stringify({ error: 'Rating system failed' })
       };
     }
   } catch (error) {
+    console.error('Error rating package:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Internal server error' })
