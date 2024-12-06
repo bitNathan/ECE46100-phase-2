@@ -22,7 +22,7 @@ export class Logger {
     private printLog(message: string, verbosity_type: VerbosityType = VerbosityType.INFO)
     {
         // Check if the verbosity type is valid according to the .env file
-        if (verbosity_type == config.LOG_LEVEL && config.LOG_LEVEL != 0)
+        if (verbosity_type <= config.LOG_LEVEL && config.LOG_LEVEL != 0)
         {
             let testDirectory: string = path.dirname(config.LOG_FILE); // extract the directory from the logfile path
             

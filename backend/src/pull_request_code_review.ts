@@ -25,7 +25,7 @@ export async function getPullRequestCodeReview(owner: string, repo: string): Pro
         // Return the fraction of reviewed changes
         const fractionReviewed = reviewedCodeChanges / totalCodeChanges;
         logger.debug(`Reviewed Code Changes: ${reviewedCodeChanges}, Total Code Changes: ${totalCodeChanges}`);
-        return fractionReviewed;
+         return fractionReviewed;
     } catch (error) {
         logger.error(`Error occurred while fetching pull requests: ${error instanceof Error ? error.message : 'Unknown error'}`);
         return 0;  // Default value in case of error
