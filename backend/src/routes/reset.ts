@@ -1,28 +1,21 @@
 import express from 'express';
-const mysql = require('mysql2/promise');
+import dbConnectionPromise from './db';
 
 const router = express.Router();
-
-// AWS RDS Configuration
-let db_connection = mysql.Connection;
-(async () => {
-  try {
-      db_connection = await mysql.createConnection({
-      host: process.env.AWS_RDS_ENDPOINT,
-      user: process.env.AWS_RDS_USERNAME, 
-      password: process.env.AWS_RDS_PASSWORD, 
-      database: process.env.AWS_RDS_DATABASE_NAME,
-      port: parseInt(process.env.AWS_RDS_PORT as string, 10)
-    });
-    // console.log('Database connection established successfully');
-  } catch (error) {
-    console.error('Error connecting to the database:', error);
-  }
-})();
 
 // Route to get all items from the registry table
 router.delete('/reset', async (req, res) => {
   try {
+
+    // Establish db connection
+    const db_connection = await dbConnectionPromise; 
+
+    // check db connection status
+    if (!db_connection) {
+      res.status(500).json({ message: 'Database connection failed' });
+      return;
+    }
+
     const [rows] = await db_connection.execute('SELECT * FROM packages');
 
     // Check if there are any packages

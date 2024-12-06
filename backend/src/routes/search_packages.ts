@@ -1,9 +1,8 @@
 
 import express from 'express';
-const router = express.Router();
-const mysql = require('mysql2/promise');
-
 import dbConnectionPromise from './db';
+
+const router = express.Router();
 
 router.post('/package/byRegEx', async (req: any, res: any) => {
     const { regex: RegEx } = req.body;
@@ -17,7 +16,15 @@ router.post('/package/byRegEx', async (req: any, res: any) => {
         // Assume db_connection is your database connection and is set up to use promises
         // const query = `SELECT * FROM packages WHERE package_name REGEXP ? OR readme REGEXP ?`;
         const query = `SELECT * FROM packages WHERE package_name REGEXP ?`;
+        
+        // Establish db connection
         const db_connection = await dbConnectionPromise; 
+
+        // check db connection status
+        if (!db_connection) {
+            return res.status(500).json({ message: 'Database connection failed' });
+        }
+
         const [rows] = await db_connection.execute(query, [RegEx]);
 
         if (rows.length === 0) {

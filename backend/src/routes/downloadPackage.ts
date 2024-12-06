@@ -1,23 +1,7 @@
 import express from 'express';
+import dbConnectionPromise from './db';
 
-const mysql = require('mysql2/promise');
 const router = express.Router();
-
-// Database Configuration
-let db_connection = mysql.Connection;
-(async () => {
-  try {
-    db_connection = await mysql.createConnection({
-      host: process.env.AWS_RDS_ENDPOINT,
-      user: process.env.AWS_RDS_USERNAME,
-      password: process.env.AWS_RDS_PASSWORD,
-      database: process.env.AWS_RDS_DATABASE_NAME,
-      port: parseInt(process.env.AWS_RDS_PORT as string, 10)
-    });
-  } catch (error) {
-    console.error('Error connecting to the database:', error);
-  }
-})();
 
 // download package
 router.get('/package/:id', async (req, res) => {
@@ -28,6 +12,15 @@ router.get('/package/:id', async (req, res) => {
       // Check if packageID is provided
       if (!packageID) {
         res.status(400).json({ message: 'Package ID is required' });
+        return;
+      }
+
+      // Establish db connection
+      const db_connection = await dbConnectionPromise; 
+
+      // check db connection status
+      if (!db_connection) {
+        res.status(500).json({ message: 'Database connection failed' });
         return;
       }
   
