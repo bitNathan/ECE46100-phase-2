@@ -5,6 +5,7 @@ import uploadPackageRouter from './routes/uploadPackage';
 import downloadPackageRouter from './routes/downloadPackage';
 import searchPackagesRouter from './routes/search_packages';
 import recommendRouter from './routes/recommend';
+import updatePackageRouter from './routes/updatePackage';
 import cors from 'cors';
 const app = express();
 
@@ -23,6 +24,14 @@ app.use('/', downloadPackageRouter);
 app.use('/', packagesRouter);
 app.use('/', resetRouter);
 app.use('/', recommendRouter);
+app.use('/', updatePackageRouter);
+
+app.use((err: any, req: any, res: any, next: express.NextFunction) => {
+  if (err instanceof SyntaxError && 'body' in err) {
+    return res.status(400).json({ message: 'Invalid JSON body' });
+  }
+  next(err);
+});
 
 // Start the server
 if (require.main === module) { // due to testing

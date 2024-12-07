@@ -6,9 +6,6 @@ import * as CryptoJS from 'crypto-js';
 const API_BASE_URL = 'http://localhost:3000';
  // Use '/api' if proxy is configured
 
-// If not using proxy, specify the full URL with the backend port
-// const API_BASE_URL = 'http://localhost:3000';
-
 export const getPackages = async () => {
   try {
     const response = await axios.get(`${API_BASE_URL}/packages`);
@@ -79,6 +76,47 @@ export const uploadPackage = async (
   }
 };
 
+export const updatePackage = async (
+  packageId: string,
+  version: string,
+  content: string | null,
+  url: string | null,
+  name: string,
+  jsProgram: string,
+  debloat: boolean
+) => {
+  try {
+    const requestData: any = {
+      metadata: {
+        Name: name,
+        Version: version,
+        ID: packageId,
+      },
+      data: {
+        Name: name,
+        ...(content ? { Content: content } : {}),
+        ...(url ? { URL: url } : {}),
+        JSProgram: jsProgram,
+        debloat,
+      },
+    };
+
+    const response = await axios.post(`${API_BASE_URL}/package/${packageId}`, requestData);
+    alert('Package updated successfully!');
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const statusCode = error.response?.status;
+      const errorMessage = error.response?.data?.message || 'An unknown error occurred';
+
+      alert(`Error: ${errorMessage} (Status Code: ${statusCode})`);
+
+    } else {
+      alert('Error: Failed to connect to the server.');
+    }
+  }
+};
+
 export const downloadPackageByNameVersion = async (name: string, version: string) => {
   try {
     // Generate the package ID using SHA256(Name + Version)
@@ -113,22 +151,6 @@ export const recommendPackages = async (description: string) => {
   }
 };
 
-export const updatePackage = async (packageId: string, version: string, file: File) => {
-  try {
-    const formData = new FormData();
-    formData.append('version', version);
-    formData.append('file', file);
-
-    await axios.put(`${API_BASE_URL}/package/${packageId}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-  } catch (error) {
-    console.error('Error updating package:', error);
-  }
-};
-
 export const ratePackage = async (packageId: string) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/package/${packageId}/rate`);
@@ -136,16 +158,6 @@ export const ratePackage = async (packageId: string) => {
   } catch (error) {
     console.error('Error rating package:', error);
     return null;
-  }
-};
-
-export const auditPackageConfusion = async () => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/audit/confusion`);
-    return response.data;
-  } catch (error) {
-    console.error('Error auditing package confusion:', error);
-    return [];
   }
 };
 

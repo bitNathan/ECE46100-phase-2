@@ -1,6 +1,5 @@
 import request from 'supertest';
 import app from '../server';
-import OpenAI from 'openai';
 
 // Mock OpenAI
 jest.mock('openai', () => {
