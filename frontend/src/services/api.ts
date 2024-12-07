@@ -9,9 +9,11 @@ const API_BASE_URL = 'http://localhost:3000';
 // If not using proxy, specify the full URL with the backend port
 // const API_BASE_URL = 'http://localhost:3000';
 
-export const getPackages = async () => {
+export const getPackages = async (offset: number) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/packages`);
+    const response = await axios.post(`${API_BASE_URL}/packages`, null, {
+      params: { offset },
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching packages:', error);
