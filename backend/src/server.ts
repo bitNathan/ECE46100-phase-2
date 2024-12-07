@@ -6,6 +6,7 @@ import downloadPackageRouter from './routes/downloadPackage';
 import searchPackagesRouter from './routes/search_packages';
 import recommendRouter from './routes/recommend';
 import updatePackageRouter from './routes/updatePackage';
+import tracksRouter from './routes/tracks';
 import cors from 'cors';
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/', packagesRouter);
 app.use('/', resetRouter);
 app.use('/', recommendRouter);
 app.use('/', updatePackageRouter);
+app.use('/', tracksRouter);
 
 app.use((err: any, req: any, res: any, next: express.NextFunction) => {
   if (err instanceof SyntaxError && 'body' in err) {
