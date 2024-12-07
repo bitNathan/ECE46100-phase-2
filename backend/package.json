@@ -20,7 +20,8 @@
     "axios": "^1.7.7",
     "mysql2": "^3.11.4",
     "supertest": "^7.0.0",
-    "is-base64": "^1.1.0"
+    "is-base64": "^1.1.0",
+    "openai": "^4.76.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

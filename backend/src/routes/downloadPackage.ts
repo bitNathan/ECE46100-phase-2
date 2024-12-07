@@ -7,7 +7,6 @@ const router = express.Router();
 router.get('/package/:id', async (req, res) => {
     try {
       const packageID = req.params.id;
-      console.log('Package ID:', packageID);
   
       // Check if packageID is provided
       if (!packageID) {
