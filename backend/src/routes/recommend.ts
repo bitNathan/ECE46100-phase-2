@@ -34,6 +34,7 @@ router.post('/recommend', async (req, res) => {
         // Build the response object
         const response = {
             data: {
+                description: description,
                 prompt: prompt,
                 recommendations: responseContent
             }
