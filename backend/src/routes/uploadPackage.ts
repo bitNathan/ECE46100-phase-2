@@ -7,7 +7,6 @@ import axios from 'axios';
 import dbConnectionPromise from './db';
 import isBase64 from 'is-base64';
 import AdmZip from 'adm-zip';
-import { read } from 'fs';
 
 const router = express.Router();
 
