@@ -79,7 +79,6 @@ export async function getBusFactor(owner: string, repoName: string): Promise<num
     var elapsed_time:number = (new Date().getTime() - start) / 1000;
 
     logger.infoDebug(`Successfully calculated Bus Factor of ${score} for ${owner}/${repoName} in ${elapsed_time}s`);
-
     return [score, elapsed_time];
 }
 

@@ -4,6 +4,8 @@ import resetRouter from './routes/reset';
 import uploadPackageRouter from './routes/uploadPackage';
 import downloadPackageRouter from './routes/downloadPackage';
 import searchPackagesRouter from './routes/search_packages';
+import ratePackageRouter from './routes/packageRate';
+import packageCostRouter from './routes/packageCost';
 import cors from 'cors';
 const app = express();
 
@@ -21,6 +23,8 @@ app.use('/', searchPackagesRouter)
 app.use('/', downloadPackageRouter);
 app.use('/', packagesRouter);
 app.use('/', resetRouter);
+app.use('/', ratePackageRouter);
+app.use('/', packageCostRouter);
 
 // Start the server
 if (require.main === module) { // due to testing
