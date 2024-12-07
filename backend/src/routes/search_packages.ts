@@ -32,7 +32,7 @@ router.post('/package/byRegEx', async (req: any, res: any) => {
         }
 
         const response = rows.map((row: any) => ({
-            Version: row.version,
+            Version: row.package_version,
             Name: row.package_name,
             ID: row.id
         }));
