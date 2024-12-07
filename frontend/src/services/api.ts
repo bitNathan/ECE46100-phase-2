@@ -103,6 +103,15 @@ export const downloadPackage = async (packageID: string) => {
   }
 };
 
+export const recommendPackages = async (description: string) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/recommend`, { description });
+    return response.data;
+  } catch (error) {
+    console.error('Error recommending packages:', error);
+    return [];
+  }
+};
 
 export const updatePackage = async (packageId: string, version: string, file: File) => {
   try {
@@ -127,16 +136,6 @@ export const ratePackage = async (packageId: string) => {
   } catch (error) {
     console.error('Error rating package:', error);
     return null;
-  }
-};
-
-export const recommendPackages = async (description: string) => {
-  try {
-    const response = await axios.post(`${API_BASE_URL}/recommend`, { description });
-    return response.data;
-  } catch (error) {
-    console.error('Error recommending packages:', error);
-    return [];
   }
 };
 
