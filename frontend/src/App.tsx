@@ -1,14 +1,36 @@
-// This file serves as the main component for the front-end application.
-import React from 'react';
+import React, { useState } from 'react';
+import UploadPackage from './components/UploadPackage';
 import PackageList from './components/PackageList';
-import UploadForm from './components/UploadForm';
+import PackageVersion from './components/PackageVersion';
+import DownloadPackage from './components/DownloadPackage';
+import SearchPackagesByRegex from './components/SearchPackagesByRegex';
+import RecommendForm from './components/RecommendForm';
+import UpdatePackage from './components/UpdatePackage';
 
 const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('UploadPackage');
+
   return (
     <div>
       <h1>Trustworthy Module Registry</h1>
-      <UploadForm />
-      <PackageList />
+      <div style={{ display: 'flex', cursor: 'pointer' }}>
+        <div onClick={() => setActiveTab('UploadPackage')} style={{ padding: '10px', borderBottom: activeTab === 'UploadPackage' ? '2px solid blue' : 'none' }}>Upload Form</div>
+        <div onClick={() => setActiveTab('PackageList')} style={{ padding: '10px', borderBottom: activeTab === 'PackageList' ? '2px solid blue' : 'none' }}>Package List</div>
+        <div onClick={() => setActiveTab('PackageVersion')} style={{ padding: '10px', borderBottom: activeTab === 'PackageVersion' ? '2px solid blue' : 'none' }}>Package Version</div>
+        <div onClick={() => setActiveTab('DownloadPackage')} style={{ padding: '10px', borderBottom: activeTab === 'DownloadPackage' ? '2px solid blue' : 'none' }}>Download Package</div>
+        <div onClick={() => setActiveTab('SearchPackagesByRegex')} style={{ padding: '10px', borderBottom: activeTab === 'SearchPackagesByRegex' ? '2px solid blue' : 'none' }}>Search Packages</div>
+        <div onClick={() => setActiveTab('Recommend')} style={{ padding: '10px', borderBottom: activeTab === 'Recommend' ? '2px solid blue' : 'none' }}>Recommend</div>
+        <div onClick={() => setActiveTab('UpdatePackage')} style={{ padding: '10px', borderBottom: activeTab === 'UpdatePackage' ? '2px solid blue' : 'none' }}>Update Package</div>
+      </div>
+      <div style={{ marginTop: '20px' }}>
+        {activeTab === 'UploadPackage' && <UploadPackage />}
+        {activeTab === 'PackageList' && <PackageList />}
+        {activeTab === 'PackageVersion' && <PackageVersion />}
+        {activeTab === 'DownloadPackage' && <DownloadPackage />}
+        {activeTab === 'SearchPackagesByRegex' && <SearchPackagesByRegex />}
+        {activeTab === 'Recommend' && <RecommendForm />}
+        {activeTab === 'UpdatePackage' && <UpdatePackage />}
+      </div>
     </div>
   );
 };
