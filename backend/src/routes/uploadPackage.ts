@@ -5,6 +5,7 @@ import { extractNameAndVersionFromURL, getOwnerAndRepoFromURL, resolveURL } from
 import { generateID } from '../utils/generateID';
 import axios from 'axios';
 import dbConnectionPromise from './db';
+import isBase64 from 'is-base64'; // Import the is-base64 package
 
 const router = express.Router();
 
@@ -46,6 +47,12 @@ router.post('/package', async (req, res) => {
     }
 
     if (Content) {
+      // Validate Base64 Content
+      if (!isBase64(Content, { allowEmpty: false })) {
+        res.status(400).json({ message: 'Invalid Base64 Content' });
+        return;
+      }
+
       // Decode Base64 Content
       try {
         packageBuffer = Buffer.from(Content, 'base64');
