@@ -6,9 +6,11 @@ import * as CryptoJS from 'crypto-js';
 const API_BASE_URL = 'http://localhost:3000';
  // Use '/api' if proxy is configured
 
-export const getPackages = async () => {
+export const getPackages = async (offset: number) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/packages`);
+    const response = await axios.post(`${API_BASE_URL}/packages`, null, {
+      params: { offset },
+    });
     return response.data;
   } catch (error) {
     console.error('Error fetching packages:', error);
