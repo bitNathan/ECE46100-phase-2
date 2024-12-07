@@ -1,5 +1,3 @@
-// frontend/src/App.tsx
-
 import React, { useState } from 'react';
 import UploadForm from './components/UploadForm';
 import PackageList from './components/PackageList';
@@ -17,81 +15,71 @@ const App: React.FC = () => {
       <h1>Trustworthy Module Registry</h1>
       {/* Tab Headers */}
       <div style={{ display: 'flex', cursor: 'pointer' }}>
-        <div 
-          onClick={() => setActiveTab('UploadForm')} 
-          style={{ padding: '10px', borderBottom: activeTab === 'UploadForm' ? '2px solid blue' : 'none' }}
-        >
-          Upload Form
-        </div>
-        <div 
-          onClick={() => setActiveTab('PackageList')} 
-          style={{ padding: '10px', borderBottom: activeTab === 'PackageList' ? '2px solid blue' : 'none' }}
-        >
-          Package List
-        </div>
-        <div 
-          onClick={() => setActiveTab('PackageVersion')} 
-          style={{ padding: '10px', borderBottom: activeTab === 'PackageVersion' ? '2px solid blue' : 'none' }}
-        >
-          Package Version
-        </div>
-        <div 
-          onClick={() => setActiveTab('PackageRate')} 
-          style={{ padding: '10px', borderBottom: activeTab === 'PackageRate' ? '2px solid blue' : 'none' }}
-        >
-          Package Rating
-        </div>
-        <div 
-          onClick={() => setActiveTab('PackageCost')} 
-          style={{ padding: '10px', borderBottom: activeTab === 'PackageCost' ? '2px solid blue' : 'none' }}
-        >
-          Package Cost
-        </div>
-      </div>
-
-
-      {/* Tab Headers */}
-      <div style={{ display: 'flex', cursor: 'pointer' }}>
         <div
           onClick={() => setActiveTab('UploadForm')}
-          style={{
-            padding: '10px',
-            borderBottom: activeTab === 'UploadForm' ? '2px solid blue' : 'none',
+          style={{ 
+            padding: '10px', 
+            borderBottom: activeTab === 'UploadForm' ? '2px solid blue' : 'none' 
           }}
         >
           Upload Form
         </div>
         <div
           onClick={() => setActiveTab('PackageList')}
-          style={{
-            padding: '10px',
-            borderBottom: activeTab === 'PackageList' ? '2px solid blue' : 'none',
+          style={{ 
+            padding: '10px', 
+            borderBottom: activeTab === 'PackageList' ? '2px solid blue' : 'none' 
           }}
         >
           Package List
         </div>
         <div
           onClick={() => setActiveTab('PackageVersion')}
-          style={{
-            padding: '10px',
-            borderBottom: activeTab === 'PackageVersion' ? '2px solid blue' : 'none',
+          style={{ 
+            padding: '10px', 
+            borderBottom: activeTab === 'PackageVersion' ? '2px solid blue' : 'none' 
           }}
         >
           Package Version
         </div>
         <div
+          onClick={() => setActiveTab('PackageRate')}
+          style={{ 
+            padding: '10px', 
+            borderBottom: activeTab === 'PackageRate' ? '2px solid blue' : 'none' 
+          }}
+        >
+          Package Rating
+        </div>
+        <div
+          onClick={() => setActiveTab('PackageCost')}
+          style={{ 
+            padding: '10px', 
+            borderBottom: activeTab === 'PackageCost' ? '2px solid blue' : 'none' 
+          }}
+        >
+          Package Cost
+        </div>
+        <div
           onClick={() => setActiveTab('DownloadPackage')}
-          style={{
-            padding: '10px',
-            borderBottom: activeTab === 'DownloadPackage' ? '2px solid blue' : 'none',
+          style={{ 
+            padding: '10px', 
+            borderBottom: activeTab === 'DownloadPackage' ? '2px solid blue' : 'none' 
           }}
         >
           Download Package
         </div>
-        <div onClick={() => setActiveTab('SearchPackagesByRegex')} style={{ padding: '10px', borderBottom: activeTab === 'SearchPackagesByRegex' ? '2px solid blue' : 'none' }}>
+        <div 
+          onClick={() => setActiveTab('SearchPackagesByRegex')}
+          style={{ 
+            padding: '10px', 
+            borderBottom: activeTab === 'SearchPackagesByRegex' ? '2px solid blue' : 'none' 
+          }}
+        >
           Search Packages
         </div>
       </div>
+
       {/* Tab Content */}
       <div style={{ marginTop: '20px' }}>
         {activeTab === 'UploadForm' && <UploadForm />}
