@@ -6,6 +6,8 @@ import downloadPackageRouter from './routes/downloadPackage';
 import searchPackagesRouter from './routes/search_packages';
 import ratePackageRouter from './routes/packageRate';
 import packageCostRouter from './routes/packageCost';
+import recommendRouter from './routes/recommend';
+import updatePackageRouter from './routes/updatePackage';
 import cors from 'cors';
 const app = express();
 
@@ -23,6 +25,8 @@ app.use('/', searchPackagesRouter)
 app.use('/', downloadPackageRouter);
 app.use('/', packagesRouter);
 app.use('/', resetRouter);
+app.use('/', recommendRouter);
+app.use('/', updatePackageRouter);
 app.use('/', ratePackageRouter);
 app.use('/', packageCostRouter);
 
@@ -30,4 +34,20 @@ app.use('/', packageCostRouter);
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
+
+app.use((err: any, req: any, res: any, next: express.NextFunction) => {
+  if (err instanceof SyntaxError && 'body' in err) {
+    return res.status(400).json({ message: 'Invalid JSON body' });
+  }
+  next(err);
 });
+
+// Start the server
+if (require.main === module) { // due to testing
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server started on port ${PORT}`);
+  });
+}
+
+export default app; // for testing

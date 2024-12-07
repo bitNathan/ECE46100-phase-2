@@ -53,17 +53,16 @@ router.post('/packages', async (req, res) => {
     }
 
     const [rows] = await db_connection.execute(query, queryParams);
-    console.log("result", rows)
+    // console.log("NEW REQUEST");
+    // console.log("offsetInt", offsetInt);
+    // console.log("offset", offset);
+    // console.log("num rows", rows.length);
 
     // Map rows to handle buffer and simplify response
     const formattedRows = rows.map((row: any) => ({
-      id: row.id,
-      package_version: row.package_version,
-      package_name: row.package_name,
-      content: row.content.toString('base64'), // Encoding content as Base64 string
-      url: row.url,
-      js_program: row.js_program,
-      debloat: row.debloat === 1
+      Version: row.package_version,
+      Name: row.package_name,
+      ID: row.id
     }));
 
   

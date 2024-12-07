@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { uploadPackage } from '../services/api';
 
-const UploadForm: React.FC = () => {
+const UploadPackage: React.FC = () => {
   const [packageName, setPackageName] = useState('');
   const [content, setContent] = useState<string | null>(null);
   const [url, setUrl] = useState('');
@@ -37,7 +37,7 @@ const UploadForm: React.FC = () => {
       await uploadPackage(packageName, content, url, debloat, jsProgram);
     } catch (error) {
       // Error will be handled by uploadPackage function
-      console.error('Submit error:', error);
+      console.log('Submit error:', error);
     }
   };
 
@@ -84,4 +84,4 @@ const UploadForm: React.FC = () => {
   );
 };
 
-export default UploadForm;
+export default UploadPackage;
