@@ -30,11 +30,6 @@ app.use('/', updatePackageRouter);
 app.use('/', ratePackageRouter);
 app.use('/', packageCostRouter);
 
-// Start the server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`);
-
 app.use((err: any, req: any, res: any, next: express.NextFunction) => {
   if (err instanceof SyntaxError && 'body' in err) {
     return res.status(400).json({ message: 'Invalid JSON body' });

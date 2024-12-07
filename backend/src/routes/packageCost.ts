@@ -107,6 +107,7 @@ export const packageCostHandler = async (packageId: string, includeDependencies:
 router.get('/package/:id/cost', async (req: Request, res: Response) => {
   const packageId = req.params.id;
   const includeDependencies = req.query.dependency === 'true';
+  console.log('Calculating cost for package:', packageId, 'with dependencies:', includeDependencies);
   
   const response = await packageCostHandler(packageId, includeDependencies);
   res.status(response.statusCode).send(response.body);
