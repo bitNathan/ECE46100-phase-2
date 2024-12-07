@@ -17,8 +17,14 @@ const PackageVersion: React.FC = () => {
     try {
       const data = await fetchPackageVersion(packageName, version);
       
-      // Ensure data is an array
-      const resultsArray = Array.isArray(data) ? data : [data];
+       // Ensure data is an array and filter out null/undefined items
+       const resultsArray = (Array.isArray(data) ? data : [data])
+       .filter(item => item != null)
+       .map(item => ({
+         Name: item?.Name || 'N/A',
+         Version: item?.Version || 'N/A',
+         ID: item?.ID || 'N/A'
+       }));
       
       setSearchResults(resultsArray);
       
