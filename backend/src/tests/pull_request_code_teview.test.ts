@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getPullRequestCodeReview } from '../pull_request_code_review';
+import { getPullRequestCodeReview } from '../metrics/pull_request_code_review';
 import logger from '../logger';
 
 // Mocking the axios library

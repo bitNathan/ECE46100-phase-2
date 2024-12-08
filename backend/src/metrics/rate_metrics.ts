@@ -1,5 +1,5 @@
 // rate_metrics.ts
-import { getDependencies } from './dependency_parser';
+import { getDependencies } from '../dependency_parser';
 import { getPullRequestCodeReview } from './pull_request_code_review';
 
 const isMajorMinorPinned = (version: string): boolean => {

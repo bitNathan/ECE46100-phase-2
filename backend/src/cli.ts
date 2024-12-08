@@ -3,13 +3,13 @@ import * as readline from 'readline';
 import axios from 'axios';
 import logger from './logger';
 import { parseURL } from './url_parse';
-import { getBusFactor } from './bus_factor';
-import { getCorrectness } from './correctness';
-import { calculateTotalTimeFromRepo } from './ramp_up_metric';
-import { getResponsive } from './responsive_maintainer';
-import { getLicense } from './license';
-import { getPullRequestCodeReview } from './pull_request_code_review'; // Import new metric
-import { calculateRateMetrics } from './rate_metrics'; //new
+import { getBusFactor } from './metrics/bus_factor';
+import { getCorrectness } from './metrics/correctness';
+import { calculateTotalTimeFromRepo } from './metrics/ramp_up_metric';
+import { getResponsive } from './metrics/responsive_maintainer';
+import { getLicense } from './metrics/license';
+import { getPullRequestCodeReview } from './metrics/pull_request_code_review'; // Import new metric
+import { calculateRateMetrics } from './metrics/rate_metrics'; //new
 
 interface AnalysisResult {
     URL: string;
