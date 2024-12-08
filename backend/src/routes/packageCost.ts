@@ -16,7 +16,7 @@ const calculateSizeMB = (buffer: Buffer): number => {
 };
 
 // Extract package.json from a zip buffer
-const extractPackageJsonFromZip = (zipBuffer: Buffer): any => {
+export const extractPackageJsonFromZip = (zipBuffer: Buffer): any => {
   const zip = new AdmZip(zipBuffer);
   const entries = zip.getEntries();
 
@@ -33,7 +33,7 @@ const extractPackageJsonFromZip = (zipBuffer: Buffer): any => {
 
 
 // Extract package.json from a tarball buffer (.tgz from npm)
-const extractPackageJsonFromTarball = async (tarballBuffer: Buffer): Promise<any> => {
+export const extractPackageJsonFromTarball = async (tarballBuffer: Buffer): Promise<any> => {
   const ungzipped = gunzipSync(tarballBuffer);
   const extract = tar.extract();
   
@@ -249,7 +249,7 @@ export const packageCostHandler = async (packageId: string, includeDependencies:
     if (!packageId) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Missing field(s) in PackageID' })
+        body: { error: 'Missing field(s) in PackageID' }
       };
     }
 
@@ -257,18 +257,18 @@ export const packageCostHandler = async (packageId: string, includeDependencies:
     if (!db_connection) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Database connection failed' })
+        body: { error: 'Database connection failed' }
       };
     }
 
-    // Confirm package existence locally by id
+    // Confirm package existence
     const checkQuery = 'SELECT package_name, package_version FROM packages WHERE id = ?';
     const [checkResult] = await db_connection.execute(checkQuery, [packageId]);
 
     if (!Array.isArray(checkResult) || checkResult.length === 0) {
       return {
         statusCode: 404,
-        body: JSON.stringify({ error: 'Package does not exist' })
+        body: { error: 'Package does not exist' }
       };
     }
 
@@ -281,20 +281,20 @@ export const packageCostHandler = async (packageId: string, includeDependencies:
       if (!localResult) {
         return {
           statusCode: 404,
-          body: JSON.stringify({ error: 'Package does not exist locally' })
+          body: { error: 'Package does not exist locally' }
         };
       }
       return {
         statusCode: 200,
-        body: JSON.stringify({
+        body: {
           [packageId]: {
             totalCost: localResult.standaloneCost
           }
-        })
+        }
       };
     }
 
-    // If includeDependencies is true, recursively resolve with npm
+    // With dependencies
     const visited = new Map<string, {standaloneCost: number; totalCost: number}>();
     const stack = new Set<string>();
 
@@ -305,43 +305,35 @@ export const packageCostHandler = async (packageId: string, includeDependencies:
     if (!mainResult) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Could not resolve main package costs' })
+        body: { error: 'Could not resolve main package costs' }
       };
     }
 
-    // Build final output:
-    // The main package uses the given ID as the key.
-    // Dependencies not found locally remain keyed by name@version.
     const finalOutput: Record<string, {standaloneCost?: number; totalCost: number}> = {};
 
     for (const [key, val] of visited) {
       let outputKey = key;
       const { standaloneCost, totalCost } = val;
-
-      // The main package should have the ID as key
       if (key === mainKey) {
         outputKey = packageId;
       }
-
-      // For dependencies, we leave them as name@version, since we removed local lookups
-      finalOutput[outputKey] = { totalCost };
-      // Add standaloneCost for the main package and all dependencies (since dependency=true)
-      finalOutput[outputKey].standaloneCost = standaloneCost;
+      finalOutput[outputKey] = { totalCost, standaloneCost };
     }
 
     return {
       statusCode: 200,
-      body: JSON.stringify(finalOutput)
+      body: finalOutput
     };
 
   } catch (error: any) {
     console.error('Error in packageCostHandler:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' })
+      body: { error: 'Internal server error' }
     };
   }
 };
+
 
 router.get('/package/:id/cost', async (req: Request, res: Response) => {
   try {

@@ -11,11 +11,11 @@ import { getLicense } from '../metrics/license';
 // Mock all dependencies
 jest.mock('../metrics/pull_request_code_review');
 jest.mock('../dependency_parser');
-jest.mock('../bus_factor');
-jest.mock('../correctness');
-jest.mock('../ramp_up_metric');
-jest.mock('../responsive_maintainer');
-jest.mock('../license');
+jest.mock('../metrics/bus_factor');
+jest.mock('../metrics/correctness');
+jest.mock('../metrics/ramp_up_metric');
+jest.mock('../metrics/responsive_maintainer');
+jest.mock('../metrics/license');
 
 describe('Rate Metrics Calculation', () => {
   beforeEach(() => {
