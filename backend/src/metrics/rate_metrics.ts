@@ -1,4 +1,3 @@
-// rate_metrics.ts
 import { getDependencies } from '../dependency_parser';
 import { getPullRequestCodeReview } from './pull_request_code_review';
 
@@ -16,7 +15,6 @@ const isMajorMinorPinned = (version: string): boolean => {
            !version.endsWith('*');
 };
   
-
 export const calculateDependencyPinning = async (owner: string, repo: string): Promise<number> => {
     const dependencies = await getDependencies(owner, repo);
     
