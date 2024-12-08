@@ -8,8 +8,9 @@ import { getCorrectness } from './metrics/correctness';
 import { calculateTotalTimeFromRepo } from './metrics/ramp_up_metric';
 import { getResponsive } from './metrics/responsive_maintainer';
 import { getLicense } from './metrics/license';
-import { getPullRequestCodeReview } from './metrics/pull_request_code_review'; // Import new metric
-import { calculateRateMetrics } from './metrics/rate_metrics'; //new
+import { getPullRequestCodeReview } from './metrics/pull_request_code_review';
+import { calculateRateMetrics } from './metrics/rate_metrics';
+import { getPinnedDependencies } from './metrics/pinned_dependencies';
 
 interface AnalysisResult {
     URL: string;
@@ -25,19 +26,37 @@ interface AnalysisResult {
     ResponsiveMaintainer_Latency: number;
     License: number;
     License_Latency: number;
-    PullRequestCodeReview: number;                // Add new metric here
-    PullRequestCodeReview_Latency: number;       // Add latency for new metric
+    PullRequestCodeReview: number;
+    PullRequestCodeReview_Latency: number;
+    PinnedDependencies: number;
+    PinnedDependencies_Latency: number;
 }
 
 class RepositoryAnalyzer {
     private static calculateNetScore(metrics: Partial<AnalysisResult>): number {
-        const { BusFactor, Correctness, RampUp, ResponsiveMaintainer, License, PullRequestCodeReview } = metrics;
-        if (BusFactor === undefined || Correctness === undefined || RampUp === undefined || 
-            ResponsiveMaintainer === undefined || License === undefined || PullRequestCodeReview === undefined) {
-            throw new Error("Missing metrics for NetScore calculation");
-        }
-        return ((0.25 * BusFactor) + (0.2 * Correctness) + (0.2 * RampUp) + (0.2 * ResponsiveMaintainer) + (0.15 * PullRequestCodeReview)) * License;
-    }
+    const {
+        BusFactor = 0,  // Default to 0 if undefined
+        Correctness = 0,
+        RampUp = 0,
+        ResponsiveMaintainer = 0,
+        License = 0, 
+        PullRequestCodeReview = 0,
+        PinnedDependencies = 0
+    } = metrics;
+
+    // Compute weighted average
+    const weightedScore = (
+        (0.2 * BusFactor) +
+        (0.2 * Correctness) +
+        (0.15 * RampUp) +
+        (0.15 * ResponsiveMaintainer) +
+        (0.15 * PullRequestCodeReview) +
+        (0.15 * PinnedDependencies)
+    );
+
+    // Multiply by license to apply the licensing factor
+    return weightedScore * License;
+}
 
     static async analyzeRepository(repoUrl: string): Promise<AnalysisResult> {
         const start = Date.now();
@@ -64,12 +83,12 @@ class RepositoryAnalyzer {
             calculateTotalTimeFromRepo(`https://github.com/${owner}/${repo}`),
             getResponsive(owner, repo),
             getLicense(owner, repo),
-            getPullRequestCodeReview(owner, repo)      // Add new metric call
+            getPullRequestCodeReview(owner, repo),
+            getPinnedDependencies(owner, repo)
         ];
 
         const metricResults = await Promise.all(metricPromises);
 
-        // Destructure with type assertions and default values
         const busFactor = Array.isArray(metricResults[0]) ? metricResults[0][0] : metricResults[0];
         const busFactorLatency = Array.isArray(metricResults[0]) ? metricResults[0][1] : 0;
         
@@ -88,6 +107,9 @@ class RepositoryAnalyzer {
         const pullRequestCodeReview = Array.isArray(metricResults[5]) ? metricResults[5][0] : metricResults[5];
         const pullRequestCodeReviewLatency = Array.isArray(metricResults[5]) ? metricResults[5][1] : 0;
 
+        const pinnedDependencies = Array.isArray(metricResults[6]) ? metricResults[6][0] : metricResults[6];
+        const pinnedDependenciesLatency = Array.isArray(metricResults[6]) ? metricResults[6][1] : 0;
+
         const result: AnalysisResult = {
             URL: repoUrl,
             NetScore: 0,
@@ -102,8 +124,10 @@ class RepositoryAnalyzer {
             ResponsiveMaintainer_Latency: Number(responsiveMaintainerLatency.toFixed(3)),
             License: Number(license.toFixed(2)),
             License_Latency: Number(licenseLatency.toFixed(3)),
-            PullRequestCodeReview: Number(pullRequestCodeReview.toFixed(2)), // Add to result
-            PullRequestCodeReview_Latency: Number(pullRequestCodeReviewLatency.toFixed(3)) // Add to result
+            PullRequestCodeReview: Number(pullRequestCodeReview.toFixed(2)),
+            PullRequestCodeReview_Latency: Number(pullRequestCodeReviewLatency.toFixed(3)),
+            PinnedDependencies: Number(pinnedDependencies.toFixed(2)),
+            PinnedDependencies_Latency: Number(pinnedDependenciesLatency.toFixed(3))
         };
 
         result.NetScore = Number(this.calculateNetScore(result).toFixed(2));
@@ -136,7 +160,6 @@ class RepositoryAnalyzer {
             }
         }
 
-        // Close the readline interface
         rl.close();
     }
 }
