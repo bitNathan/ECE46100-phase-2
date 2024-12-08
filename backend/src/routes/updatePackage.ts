@@ -252,7 +252,13 @@ router.post('/package/:id', async (req, res) => {
 
     // If debloat requested
     if (debloat === true) {
-      packageBuffer = await processPackage(packageBuffer);
+      let newPackageBuffer = null;
+      try {
+        newPackageBuffer = await processPackage(packageBuffer);
+        packageBuffer = newPackageBuffer;
+      } catch (error) {
+        console.error('Error during debloating:', error);
+      }
     }
 
     // Rate the package

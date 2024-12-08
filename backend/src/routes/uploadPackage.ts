@@ -61,7 +61,7 @@ router.post('/package', async (req, res) => {
         res.status(400).json({ message: 'Invalid Base64 Content' });
         return;
       }
-    
+
       // Extract README file content
       try {
         const zip = new AdmZip(packageBuffer); // Initialize zip handler
@@ -152,7 +152,13 @@ router.post('/package', async (req, res) => {
 
     // Handle debloat if required
     if (debloat === true) {
-      packageBuffer = await processPackage(packageBuffer);
+      let newPackageBuffer = null;
+      try {
+        newPackageBuffer = await processPackage(packageBuffer);
+        packageBuffer = newPackageBuffer;
+      } catch (error) {
+        console.error('Error during debloating:', error);
+      }
     }
 
     // Rate the package
