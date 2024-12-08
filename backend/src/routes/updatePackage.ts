@@ -252,12 +252,12 @@ router.post('/package/:id', async (req, res) => {
 
     // If debloat requested
     if (debloat === true) {
+      let newPackageBuffer = null;
       try {
-        packageBuffer = await processPackage(packageBuffer);
+        newPackageBuffer = await processPackage(packageBuffer);
+        packageBuffer = newPackageBuffer;
       } catch (error) {
         console.error('Error during debloating:', error);
-        res.status(400).json({ message: 'Unable to Debloat File, Re-upload without debloating' });
-        return;
       }
     }
 

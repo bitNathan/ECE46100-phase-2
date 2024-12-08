@@ -94,6 +94,23 @@ const findEntryPoint = async (packagePath: string): Promise<string | null> => {
   const pkgJsonPath = path.join(packagePath, 'package.json');
   let mainFile = 'index.js';
 
+  if (!fs.existsSync(pkgJsonPath)) {
+    // Check if files are extracted into a subdirectory
+    const subdirs = fs.readdirSync(packagePath, { withFileTypes: true }).filter(f => f.isDirectory());
+    if (subdirs.length === 1) {
+      const subDirPath = path.join(packagePath, subdirs[0].name);
+      const nestedPkgJsonPath = path.join(subDirPath, 'package.json');
+      if (fs.existsSync(nestedPkgJsonPath)) {
+        // Move package.json to root
+        fs.renameSync(nestedPkgJsonPath, pkgJsonPath);
+
+        // Update paths for other files if needed
+        moveSubdirectoryFilesToRoot(subDirPath, packagePath);
+      }
+    }
+  }
+
+  // At this point, package.json should be in the root
   if (fs.existsSync(pkgJsonPath)) {
     try {
       const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf-8'));
@@ -106,8 +123,32 @@ const findEntryPoint = async (packagePath: string): Promise<string | null> => {
   }
 
   const mainPath = path.join(packagePath, mainFile);
-  return fs.existsSync(mainPath) ? mainPath : null;
+  if (fs.existsSync(mainPath)) {
+    console.log('Entry point found at:', mainPath);
+    return mainPath;
+  } else {
+    return null;
+  }
 };
+
+/**
+ * Move all files from the subdirectory to the root, excluding package.json.
+ */
+const moveSubdirectoryFilesToRoot = (subDirPath: string, rootPath: string): void => {
+  const files = fs.readdirSync(subDirPath, { withFileTypes: true });
+  for (const file of files) {
+    const srcPath = path.join(subDirPath, file.name);
+    const destPath = path.join(rootPath, file.name);
+    if (fs.existsSync(destPath)) {
+      continue;
+    }
+    fs.renameSync(srcPath, destPath);
+  }
+
+  // Remove the empty subdirectory
+  fs.rmdirSync(subDirPath);
+};
+
 
 const debloatPackage = async (packagePath: string): Promise<void> => {
   // Remove unnecessary files first
