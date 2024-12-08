@@ -1,4 +1,4 @@
-import { calculateDependencyPinning } from '../dependency_pinning';
+import { calculateDependencyPinning } from '../metrics/dependency_pinning';
 import { getDependencies } from '../dependency_parser';
 
 jest.mock('../dependency_parser');

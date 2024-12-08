@@ -1,5 +1,5 @@
-import { graphqlRequest } from "./graphql_request";
-import logger from "./logger";
+import { graphqlRequest } from "../graphql_request";
+import logger from "../logger";
 
 export async function getCorrectness(owner: string, repoName: string): Promise<number[]>
 {

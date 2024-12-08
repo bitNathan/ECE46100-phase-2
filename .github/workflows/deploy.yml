@@ -1,0 +1,42 @@
+name: AWS Deployment
+on:
+  # only run on approved PR
+  pull_request:
+    branches:
+    - 34-host-on-aws
+    types:
+    - closed
+
+jobs:
+  deploy:
+    # only runs when new code is merged, not when PR is raised
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    env:
+        GITHUB_TOKEN: ${{secrets.TOKEN}}
+        AWS_PEM: |
+          ${{secrets.AWS_WEB_HOSTING_KEY_PEM}}
+        AWS_NAME: ${{secrets.INSTANCE_DNS}}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+  
+      - name: deploy code
+        run: |
+          # EOF gives warning, but necessary for pem to be interpreted right
+          echo $AWS_PEM > aws_pem.pem << EOF
+          chmod 400 aws_pem.pem
+          ssh -q -o StrictHostKeyChecking=no -i aws_pem.pem ubuntu@$AWS_NAME
+
+          # TODO install nvm and nginx
+          # TODO configure runfiles
+          
+          # pull
+          cd ~/ECE46100-phase-2
+          git checkout 34-host-on-aws
+          git pull
+
+          # restart nginx
+          sudo systemctl restart nginx
+          sudo nginx -t

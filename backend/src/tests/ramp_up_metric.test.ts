@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
-import { calculateTotalTimeFromRepo, deleteDirectoryRecursive, cloneGitHubRepo, calculateMetrics, calculateTimeToProgram, getJavaScriptFiles} from '../ramp_up_metric';
+import { calculateTotalTimeFromRepo, deleteDirectoryRecursive, cloneGitHubRepo, calculateMetrics, calculateTimeToProgram, getJavaScriptFiles} from '../metrics/ramp_up_metric';
 
 // 5 test cases
 

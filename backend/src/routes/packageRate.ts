@@ -1,14 +1,15 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import { Router } from 'express';
 import dbConnectionPromise from './db';
-import { getBusFactor } from '../bus_factor';
-import { getCorrectness } from '../correctness';
-import { calculateTotalTimeFromRepo } from '../ramp_up_metric';
-import { getResponsive } from '../responsive_maintainer';
-import { getLicense } from '../license';
-import { getDependencies } from '../dependency_parser';
-import { getPullRequestCodeReview } from '../pull_request_code_review';
+import { getBusFactor } from '../metrics/bus_factor';
+import { getCorrectness } from '../metrics/correctness';
+import { calculateTotalTimeFromRepo } from '../metrics/ramp_up_metric';
+import { getResponsive } from '../metrics/responsive_maintainer';
+import { getLicense } from '../metrics/license';
+import { calculateDependencyPinning } from '../metrics/dependency_pinning';
+import { getPullRequestCodeReview } from '../metrics/pull_request_code_review';
 import { parseURL } from '../url_parse';
+import AdmZip from 'adm-zip';
 
 const router: Router = express.Router();
 
@@ -19,22 +20,24 @@ export const packageRateHandler = async (packageId: string) => {
     if (!packageId) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Missing field(s) in PackageID' })
-      };
-    }
-
-    // Validate package ID format
-    if (!/^[a-zA-Z0-9\-]+$/.test(packageId)) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Invalid PackageID format' })
+        body: JSON.stringify({ error: 'PackageID not given' })
       };
     }
 
     // Get package from database
     const db_connection = await dbConnectionPromise;
+
+    // check db connection status
+    if (!db_connection) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Database connection failed' })
+      };
+    }
+
     const query = 'SELECT * FROM packages WHERE id = ?';
     const result = await db_connection.execute(query, [packageId]);
+    console.log(result);
 
     if (result[0].length === 0) {
       return {
@@ -50,6 +53,59 @@ export const packageRateHandler = async (packageId: string) => {
 
     if (packageData.url) {
       [owner, repo] = await parseURL(packageData.url);
+    } else {
+      try {
+        // Decode the base64 content to binary
+        const buffer = Buffer.from(packageData.content, 'base64');
+
+        // Initialize zip handler
+        const zip = new AdmZip(buffer);
+
+        // Search for package.json in the zip file
+        const zipEntries = zip.getEntries();
+        let packageJsonContent = null;
+
+        zipEntries.forEach((entry) => {
+          if (entry.entryName.endsWith('package.json')) {
+            packageJsonContent = entry.getData().toString('utf8');
+          }
+        });        
+
+        if (!packageJsonContent) {
+          throw new Error("package.json not found in the uploaded content.");
+        }
+
+        // Parse the package.json content
+        const packageJson = JSON.parse(packageJsonContent);
+
+        // Extract the repository field
+        const repository = packageJson.repository;
+
+        // Handle different formats of the repository field
+        let url = null;
+        if (typeof repository === 'string') {
+          // Direct string format like "bendrucker/smallest"
+          url = `https://github.com/${repository}`;
+        } else if (typeof repository === 'object' && repository.url) {
+          // Object format with a URL field
+          url = repository.url;
+        }
+
+        if (!url) {
+          throw new Error("Repository URL not found in the package.json.");
+        }
+
+        // Parse the URL (if needed to get specific parts like owner and repo)
+        [owner, repo] = await parseURL(url);
+
+        console.log('Extracted URL:', url);
+      } catch (error) {
+        console.error('Error extracting package.json:', error);
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: 'Failed to extract url from package.json' })
+        };
+      }
     }
 
     if (!owner || !repo) {
@@ -64,13 +120,13 @@ export const packageRateHandler = async (packageId: string) => {
 
     try {
       const [
-        busFactorResult,
-        correctnessResult,
-        rampUpResult,
-        responsiveMaintainerResult,
-        licenseResult,
-        pullRequestResult,
-        dependencies
+        [busFactorResult, busFactorLatency],
+        [correctnessResult, correctnessLatency],
+        [rampUpResult, rampUpLatency],
+        [responsiveMaintainerResult, responsiveMaintainerLatency],
+        [licenseResult, licenseLatency],
+        [pullRequestResult, pullRequestLatency],
+        [goodPinningPractice, goodPinningPracticeLatency]
       ] = await Promise.all([
         getBusFactor(owner, repo),
         getCorrectness(owner, repo),
@@ -78,37 +134,30 @@ export const packageRateHandler = async (packageId: string) => {
         getResponsive(owner, repo),
         getLicense(owner, repo),
         getPullRequestCodeReview(owner, repo),
-        getDependencies(owner, repo)
+        calculateDependencyPinning(owner, repo)
       ]);
 
-      // Calculate GoodPinningPractice
-      const goodPinningPractice = dependencies.length === 0 ? 1.0 :
-        dependencies.filter(dep => {
-          const version = dep.version;
-          const cleanVersion = version.replace(/^[^0-9]*/, '');
-          return /^\d+\.\d+(\.\d+)?$/.test(cleanVersion) &&
-                 !version.includes('^') &&
-                 !version.includes('~') &&
-                 !version.endsWith('x') &&
-                 !version.endsWith('*');
-        }).length / dependencies.length;
-
-      // Format metrics
-      const metrics = {
-        RampUp: Number((Array.isArray(rampUpResult) ? rampUpResult[0] : rampUpResult).toFixed(5)),
-        Correctness: Number((Array.isArray(correctnessResult) ? correctnessResult[0] : correctnessResult).toFixed(5)),
-        BusFactor: Number((Array.isArray(busFactorResult) ? busFactorResult[0] : busFactorResult).toFixed(5)),
-        ResponsiveMaintainer: Number((Array.isArray(responsiveMaintainerResult) ? responsiveMaintainerResult[0] : responsiveMaintainerResult).toFixed(5)),
-        LicenseScore: Number((Array.isArray(licenseResult) ? licenseResult[0] : licenseResult).toFixed(5)),
-        GoodPinningPractice: Number(goodPinningPractice.toFixed(5)),
-        PullRequest: Number((Array.isArray(pullRequestResult) ? pullRequestResult[0] : pullRequestResult).toFixed(5))
-      };
-
       // Check for failed metrics
-      if (Object.values(metrics).some(metric => metric === -1)) {
+      if (busFactorResult === -1 || correctnessResult === -1 || rampUpResult === -1 || responsiveMaintainerResult === -1 || licenseResult === -1 || pullRequestResult === -1 || goodPinningPractice === -1) {
         return {
           statusCode: 500,
-          body: JSON.stringify({ error: 'The package rating system failed on at least one metric' })
+          body: JSON.stringify({ error: 'Failed to calculate one or more metrics' })
+        };
+      }
+
+      // check for null as well
+      if (busFactorResult === null || correctnessResult === null || rampUpResult === null || responsiveMaintainerResult === null || licenseResult === null || pullRequestResult === null || goodPinningPractice === null) {
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: 'Failed to calculate one or more metrics' })
+        };
+      }
+
+      // check for NaN
+      if (isNaN(busFactorResult) || isNaN(correctnessResult) || isNaN(rampUpResult) || isNaN(responsiveMaintainerResult) || isNaN(licenseResult) || isNaN(pullRequestResult) || isNaN(goodPinningPractice)) {
+        return {
+          statusCode: 500,
+          body: JSON.stringify({ error: 'Failed to calculate one or more metrics' })
         };
       }
 
@@ -123,29 +172,45 @@ export const packageRateHandler = async (packageId: string) => {
         PullRequest: 0.1
       };
 
-      const netScore = Object.entries(metrics).reduce(
-        (sum, [key, value]) => sum + value * weights[key as keyof typeof weights],
-        0
-      );
+      const netScore = (rampUpResult * weights.RampUp) + (correctnessResult * weights.Correctness) + 
+                        (busFactorResult * weights.BusFactor) + (responsiveMaintainerResult * weights.ResponsiveMaintainer) + 
+                        (licenseResult * weights.LicenseScore) + (goodPinningPractice * weights.GoodPinningPractice) + (pullRequestResult * weights.PullRequest);
 
       const endTime = Date.now();
-      const latency = (endTime - start) / 1000;
+      const net_latency = (endTime - start) / 1000;
 
-      return {
+      let response = {
         statusCode: 200,
         body: JSON.stringify({
-          ...metrics,
-          NetScore: Number(netScore.toFixed(5)),
-          RampUpLatency: latency,
-          CorrectnessLatency: latency,
-          BusFactorLatency: latency,
-          ResponsiveMaintainerLatency: latency,
-          LicenseScoreLatency: latency,
-          GoodPinningPracticeLatency: latency,
-          PullRequestLatency: latency,
-          NetScoreLatency: latency
+          BusFactor: busFactorResult,
+          Correctness: correctnessResult,
+          RampUp: rampUpResult,
+          ResponsiveMaintainer: responsiveMaintainerResult,
+          LicenseScore: licenseResult,
+          GoodPinningPractice: goodPinningPractice,
+          PullRequest: pullRequestResult,
+          NetScore: netScore,
+          RampUpLatency: rampUpLatency,
+          CorrectnessLatency: correctnessLatency,
+          BusFactorLatency: busFactorLatency,
+          ResponsiveMaintainerLatency: responsiveMaintainerLatency,
+          LicenseScoreLatency: licenseLatency,
+          GoodPinningPracticeLatency: goodPinningPracticeLatency,
+          PullRequestLatency: pullRequestLatency,
+          NetScoreLatency: net_latency
         })
       };
+
+      // check if any value is null, assign as -1
+      let responseBody = JSON.parse(response.body);
+      for (let key in responseBody) {
+        if (responseBody[key] === null) {
+          responseBody[key] = -1;
+        }
+      }
+      response.body = JSON.stringify(responseBody);
+
+      return response;
 
     } catch (error) {
       console.error('Error rating package:', error);
@@ -164,10 +229,15 @@ export const packageRateHandler = async (packageId: string) => {
 };
 
 // Express route handler
-router.get('/package/:id/rate', async (req: Request, res: Response) => {
-  const packageId = req.params.id;
-  const response = await packageRateHandler(packageId);
-  res.status(response.statusCode).send(response.body);
+router.get('/package/:id/rate', async (req, res) => {
+  try {
+    const packageId = req.params.id;
+    const response = await packageRateHandler(packageId);
+    res.status(response.statusCode).send(response.body);
+    return;
+  } catch (error){
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
 export default router;

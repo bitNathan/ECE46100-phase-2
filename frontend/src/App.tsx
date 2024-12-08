@@ -8,9 +8,21 @@ import DownloadPackage from './components/DownloadPackage';
 import SearchPackagesByRegex from './components/SearchPackagesByRegex';
 import RecommendForm from './components/RecommendForm';
 import UpdatePackage from './components/UpdatePackage';
+import { resetRegistry } from './services/api'; // Import the reset function
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('UploadPackage');
+
+  const handleReset = async () => {
+    const confirmation = window.confirm('Are you sure you want to reset the registry? This action cannot be undone.');
+    if (confirmation) {
+      try {
+        await resetRegistry();
+      } catch (error) {
+        console.error('Error resetting registry:', error);
+      }
+    }
+  };
 
   return (
     <div>
@@ -26,6 +38,7 @@ const App: React.FC = () => {
         <div onClick={() => setActiveTab('UpdatePackage')} style={{ padding: '10px', borderBottom: activeTab === 'UpdatePackage' ? '2px solid blue' : 'none' }}>Update Package</div>
         <div onClick={() => setActiveTab('PackageRate')} style={{ padding: '10px', borderBottom: activeTab === 'PackageRate' ? '2px solid blue' : 'none' }}>Package Rating</div>
         <div onClick={() => setActiveTab('PackageCost')} style={{ padding: '10px', borderBottom: activeTab === 'PackageCost' ? '2px solid blue' : 'none' }}>Package Cost</div>
+        <div onClick={handleReset} style={{ padding: '10px', color: 'red', cursor: 'pointer' }}>Reset Registry</div>
       </div>
       <div style={{ marginTop: '20px' }}>
         {activeTab === 'UploadPackage' && <UploadPackage />}

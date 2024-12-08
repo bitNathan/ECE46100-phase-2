@@ -1,14 +1,15 @@
-import { calculateRateMetrics } from '../rate_metrics';
-import { getPullRequestCodeReview } from '../pull_request_code_review';
+// rate_metrics.test.ts
+import { calculateRateMetrics } from '../metrics/rate_metrics';
+import { getPullRequestCodeReview } from '../metrics/pull_request_code_review';
 import { getDependencies } from '../dependency_parser';
-import { getBusFactor } from '../bus_factor';
-import { getCorrectness } from '../correctness';
-import { calculateTotalTimeFromRepo } from '../ramp_up_metric';
-import { getResponsive } from '../responsive_maintainer';
-import { getLicense } from '../license';
+import { getBusFactor } from '../metrics/bus_factor';
+import { getCorrectness } from '../metrics/correctness';
+import { calculateTotalTimeFromRepo } from '../metrics/ramp_up_metric';
+import { getResponsive } from '../metrics/responsive_maintainer';
+import { getLicense } from '../metrics/license';
 
 // Mock all dependencies
-jest.mock('../pull_request_code_review');
+jest.mock('../metrics/pull_request_code_review');
 jest.mock('../dependency_parser');
 jest.mock('../bus_factor');
 jest.mock('../correctness');

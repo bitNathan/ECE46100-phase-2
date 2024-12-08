@@ -7,7 +7,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node", "react", "react-dom"]
+    "types": ["node", "react", "react-dom", "jest"],
   },
   "include": ["src/**/*"]
 }

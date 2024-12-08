@@ -5,7 +5,7 @@ import { getResponsive } from './responsive_maintainer';
 import { getLicense } from './license';
 import { getPullRequestCodeReview } from './pull_request_code_review';
 import { calculateDependencyPinning } from './dependency_pinning';
-import { parseURL } from './url_parse';
+import { parseURL } from '../url_parse';
 
 export const calculateRateMetrics = async (packageData: any) => {
   try {
@@ -46,22 +46,22 @@ export const calculateRateMetrics = async (packageData: any) => {
     const metrics = {
       BusFactor: Array.isArray(busFactorResult) ? busFactorResult[0] : busFactorResult,
       BusFactorLatency: Array.isArray(busFactorResult) ? busFactorResult[1] : 0,
-      
+
       Correctness: Array.isArray(correctnessResult) ? correctnessResult[0] : correctnessResult,
       CorrectnessLatency: Array.isArray(correctnessResult) ? correctnessResult[1] : 0,
-      
+
       RampUp: Array.isArray(rampUpResult) ? rampUpResult[0] : rampUpResult,
       RampUpLatency: Array.isArray(rampUpResult) ? rampUpResult[1] : 0,
-      
+
       ResponsiveMaintainer: Array.isArray(responsiveMaintainerResult) ? responsiveMaintainerResult[0] : responsiveMaintainerResult,
       ResponsiveMaintainerLatency: Array.isArray(responsiveMaintainerResult) ? responsiveMaintainerResult[1] : 0,
-      
+
       LicenseScore: Array.isArray(licenseResult) ? licenseResult[0] : licenseResult,
       LicenseScoreLatency: Array.isArray(licenseResult) ? licenseResult[1] : 0,
-      
+
       PullRequest: Array.isArray(pullRequestResult) ? pullRequestResult[0] : pullRequestResult,
       PullRequestLatency: Array.isArray(pullRequestResult) ? pullRequestResult[1] : 0,
-      
+
       GoodPinningPractice: goodPinningPracticeResult[0],
       GoodPinningPracticeLatency: goodPinningPracticeResult[1]
     };

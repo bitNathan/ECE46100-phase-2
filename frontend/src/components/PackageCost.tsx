@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getPackageCost } from '../services/api';
 
 interface PackageCostResponse {
   [key: string]: {
@@ -22,15 +23,12 @@ const PackageCost: React.FC = () => {
 
     try {
       console.log(`Fetching cost for ${packageId}, dependencies: ${includeDependencies}`);
-      const response = await fetch(`/api/package/${packageId}/cost?dependency=${includeDependencies}`);
-      console.log('Response received:', response);
+      const data = await getPackageCost(packageId); // Use the API function
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Error: ${response.status}`);
+      if (!data) {
+        throw new Error('Failed to fetch package cost.');
       }
 
-      const data = await response.json();
       console.log('Cost data:', data);
       setCost(data);
     } catch (err) {

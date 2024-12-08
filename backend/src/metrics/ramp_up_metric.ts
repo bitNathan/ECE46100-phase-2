@@ -3,7 +3,7 @@ import * as path from 'path';
 import { execSync } from 'child_process';  // To execute git commands
 import { parse } from 'acorn';
 import { simple as walkSimple } from 'acorn-walk';
-import logger from './logger';
+import logger from '../logger';
 
 /*
 This general setup should work for implementation in CLI

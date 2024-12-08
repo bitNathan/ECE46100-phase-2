@@ -8,7 +8,9 @@ import ratePackageRouter from './routes/packageRate';
 import packageCostRouter from './routes/packageCost';
 import recommendRouter from './routes/recommend';
 import updatePackageRouter from './routes/updatePackage';
+import tracksRouter from './routes/tracks';
 import cors from 'cors';
+
 const app = express();
 
 require('dotenv').config();
@@ -29,6 +31,7 @@ app.use('/', recommendRouter);
 app.use('/', updatePackageRouter);
 app.use('/', ratePackageRouter);
 app.use('/', packageCostRouter);
+app.use('/', tracksRouter);
 
 app.use((err: any, req: any, res: any, next: express.NextFunction) => {
   if (err instanceof SyntaxError && 'body' in err) {

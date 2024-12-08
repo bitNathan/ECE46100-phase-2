@@ -4,9 +4,10 @@ import semver from 'semver';
 import dbConnectionPromise from './db';
 import { processPackage } from '../utils/packageProcessor';
 import { ratePackage } from '../utils/ratePackage';
-import { extractNameAndVersionFromURL, getOwnerAndRepoFromURL, resolveURL } from '../utils/handleURL';
+import { getOwnerAndRepoFromURL, resolveURL } from '../utils/handleURL';
 import { generateID } from '../utils/generateID';
 import isBase64 from 'is-base64';
+import AdmZip from 'adm-zip';
 
 const router = express.Router();
 
@@ -174,16 +175,34 @@ router.post('/package/:id', async (req, res) => {
     let readmeContent: string | null = null;
 
     if (isUpdateFromContent) {
-      // Validate Base64
-      if (!Content || !isBase64(Content, { allowEmpty: false })) {
+      // Validate Base64 Content
+      if (!isBase64(Content, { allowEmpty: false })) {
         res.status(400).json({ message: 'Invalid Base64 Content' });
         return;
       }
+    
+      // Decode Base64 Content
       try {
         packageBuffer = Buffer.from(Content, 'base64');
       } catch (error) {
-        res.status(400).json({ message: 'Invalid Base64 Content decoding error' });
+        res.status(400).json({ message: 'Invalid Base64 Content' });
         return;
+      }
+    
+      // Extract README file content
+      try {
+        const zip = new AdmZip(packageBuffer); // Initialize zip handler
+        const readmeEntry = zip.getEntries().find((entry) => 
+          entry.entryName.toLowerCase().endsWith('readme.md') // Look for README files
+        );
+    
+        if (readmeEntry) {
+          readmeContent = readmeEntry.getData().toString('utf-8'); // Extract README content
+        } else {
+          console.warn('No README.md file found in the uploaded content');
+        }
+      } catch (error) {
+        console.warn('Error reading README.md from content:', error);
       }
     } else if (isUpdateFromURL) {
       // Fetch package from URL
@@ -233,7 +252,13 @@ router.post('/package/:id', async (req, res) => {
 
     // If debloat requested
     if (debloat === true) {
-      packageBuffer = await processPackage(packageBuffer);
+      let newPackageBuffer = null;
+      try {
+        newPackageBuffer = await processPackage(packageBuffer);
+        packageBuffer = newPackageBuffer;
+      } catch (error) {
+        console.error('Error during debloating:', error);
+      }
     }
 
     // Rate the package

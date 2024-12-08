@@ -6,4 +6,3 @@ dist
 coverage
 *.pem
 *.log
-*.logs

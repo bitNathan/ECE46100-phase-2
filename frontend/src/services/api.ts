@@ -165,20 +165,10 @@ export const ratePackage = async (packageId: string) => {
 
 export const resetRegistry = async () => {
   try {
-    await axios.post(`${API_BASE_URL}/reset`);
+    await axios.delete(`${API_BASE_URL}/reset`);
     alert('Registry has been reset successfully.');
   } catch (error) {
     console.error('Error resetting registry:', error);
-  }
-};
-
-export const getPackageById = async (packageId: string) => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/package/${packageId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching package by ID:', error);
-    return null;
   }
 };
 
