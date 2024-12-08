@@ -7,6 +7,7 @@ import AdmZip from 'adm-zip';
 import { build } from 'esbuild';
 import * as tar from 'tar';
 import { PassThrough } from 'stream';
+const { execSync } = require('child_process');
 
 export const processPackage = async (packageBuffer: Buffer): Promise<Buffer> => {
   // Create a temporary directory
@@ -172,11 +173,22 @@ const debloatPackage = async (packagePath: string): Promise<void> => {
  * Run esbuild bundling to produce a minimized, tree-shaken output.
  * We'll output to a `dist` directory.
  */
-const runEsbuildBundling = async (packagePath: string, entryPoint: string): Promise<void> => {
-  const distDir = path.join(packagePath, 'dist');
-  if (!fs.existsSync(distDir)) {
-    fs.mkdirSync(distDir);
+async function runEsbuildBundling(packagePath: string, entryPoint: string): Promise<void> {
+  const pkgJsonPath = path.join(packagePath, 'package.json');
+  let externalDeps: string[] = [];
+
+  if (fs.existsSync(pkgJsonPath)) {
+    const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+    // Combine dependencies, devDependencies, peerDependencies as needed
+    externalDeps = [
+      ...Object.keys(pkg.dependencies || {}),
+      ...Object.keys(pkg.devDependencies || {}),
+      ...Object.keys(pkg.peerDependencies || {})
+    ];
   }
+
+  const distDir = path.join(packagePath, 'dist');
+  if (!fs.existsSync(distDir)) fs.mkdirSync(distDir);
 
   await build({
     entryPoints: [entryPoint],
@@ -184,11 +196,12 @@ const runEsbuildBundling = async (packagePath: string, entryPoint: string): Prom
     minify: true,
     treeShaking: true,
     platform: 'node',
-    target: 'node14', // or desired node version
+    target: 'node14',
     outfile: path.join(distDir, 'index.js'),
     sourcemap: false,
+    external: externalDeps, // Treat all dependencies as external
   });
-};
+}
 
 /**
  * After bundling, remove original source files, leaving only dist and any required package files.
