@@ -1,42 +1,32 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import DownloadPackage from '../components/DownloadPackage';
 import '@testing-library/jest-dom';
 import * as api from '../services/api';
 
-// Mock the API module to control its behavior for testing
 jest.mock('../services/api', () => ({
   downloadPackage: jest.fn(),
   downloadPackageByNameVersion: jest.fn(),
 }));
 
-function setup() {
-  const utils = render(<DownloadPackage />);
-  const nameInput = screen.getByPlaceholderText(/Package Name/i);
-  const versionInput = screen.getByPlaceholderText(/Package Version/i);
-  const idInput = screen.getByPlaceholderText(/Package ID/i);
-  const [downloadByNameVersionButton, downloadByIdButton] = screen.getAllByText(/Download Package/i);
-  return {
-    ...utils,
-    nameInput,
-    versionInput,
-    idInput,
-    downloadByNameVersionButton,
-    downloadByIdButton
-  };
-}
+
 
 test('renders download forms', () => {
-  setup();
+  render(<DownloadPackage />);
+
   expect(screen.getByText(/Download by Name and Version/i)).toBeInTheDocument();
   expect(screen.getByPlaceholderText(/Package Name/i)).toBeInTheDocument();
   expect(screen.getByPlaceholderText(/Package Version/i)).toBeInTheDocument();
+
   expect(screen.getByText(/Download by Package ID/i)).toBeInTheDocument();
   expect(screen.getByPlaceholderText(/Package ID/i)).toBeInTheDocument();
 });
 
 test('allows typing in text fields for name/version', () => {
-  const { nameInput, versionInput } = setup();
+  render(<DownloadPackage />);
+  
+  const nameInput = screen.getByPlaceholderText(/Package Name/i);
+  const versionInput = screen.getByPlaceholderText(/Package Version/i);
 
   fireEvent.change(nameInput, { target: { value: 'test-pkg' } });
   fireEvent.change(versionInput, { target: { value: '1.0.0' } });
@@ -46,26 +36,37 @@ test('allows typing in text fields for name/version', () => {
 });
 
 test('triggers download by ID when form submitted', async () => {
-  const { idInput, downloadByIdButton } = setup();
-  (api.downloadPackage as jest.Mock).mockResolvedValue({ data: { Content: btoa('file content') }, metadata: { Name: 'pkg', Version: '1.0.0', ID: '123' } });
+  const { downloadPackage } = require('../services/api');
+  downloadPackage.mockResolvedValue({ data: { Content: btoa('file content') }, metadata: { Name: 'pkg', Version: '1.0.0', ID: '123' } });
+
+  render(<DownloadPackage />);
+
+  const idInput = screen.getByPlaceholderText(/Package ID/i);
+  const submitButton = screen.getAllByText(/Download Package/i)[1]; // Assuming second button is for ID
 
   fireEvent.change(idInput, { target: { value: '123' } });
-  fireEvent.click(downloadByIdButton);
+  fireEvent.click(submitButton);
 
   await waitFor(() => {
-    expect(api.downloadPackage).toHaveBeenCalledWith('123');
+    expect(downloadPackage).toHaveBeenCalledWith('123');
   });
 });
 
 test('displays error alert if the download by ID fails', async () => {
-  global.alert = jest.fn();  // Mocking global alert function
-  const { idInput, downloadByIdButton } = setup();
-  (api.downloadPackage as jest.Mock).mockRejectedValue(new Error('Failed to download'));
+  const { downloadPackage } = require('../services/api');
+  global.alert = jest.fn();  // Mocking alert
 
+  downloadPackage.mockRejectedValue(new Error('Failed to download'));
+
+  render(<DownloadPackage />);
+  
+  const idInput = screen.getByPlaceholderText(/Package ID/i);
   fireEvent.change(idInput, { target: { value: '123' } });
-  fireEvent.click(downloadByIdButton);
+  
+  const submitButton = screen.getAllByText(/Download Package/i)[1];
+  fireEvent.click(submitButton);
 
   await waitFor(() => {
-    expect(global.alert).toHaveBeenCalledWith('Package Not Found or Error Occurred.'); // Customizing the error message
+    expect(global.alert).toHaveBeenCalledWith('Package Not Found or Error Occurred.'); // Assuming this is your error message
   });
 });
