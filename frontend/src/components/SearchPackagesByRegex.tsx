@@ -65,7 +65,8 @@ const SearchPackagesByRegex: React.FC = () => {
 
       {currentItems.length > 0 && (
         <div>
-          <h3 className="text-lg font-bold mb-2">Package Metadata:</h3>
+          <h3 className="text-lg font-bold mb-2"
+          style={{ padding: '10px' }}>Package Metadata:</h3>
           {currentItems.map((result, index) => (
             <div 
               key={index} 
