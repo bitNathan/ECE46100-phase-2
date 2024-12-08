@@ -24,7 +24,7 @@ jest.mock('../routes/db', () => {
     beforeEach(() => {
       jest.clearAllMocks();
     });
-  
+    
     test('should successfully retrieve all packages', async () => {
       const packageData = [
         {
@@ -182,6 +182,71 @@ jest.mock('../routes/db', () => {
       expect(executeMock).toHaveBeenCalledWith(
         'SELECT * FROM packages WHERE package_name = ? AND package_Version = ?',
         ['TestPackage1', '1.0.0']
+      );
+    });
+
+    test('should return 400 when package name is missing', async () => {
+      // Create an Express app and use the router
+      const app = express();
+      app.use(express.json());
+      app.use('/', fetchPackagesRouter);
+  
+      // Send POST request with missing package name
+      const response = await request(app)
+        .post(`/packages`)
+        .send([{ Version: '1.0.0' }])
+        .expect(400);
+  
+      expect(response.body).toHaveProperty('message', 'Package Name is required');
+    });
+  
+    test('should return 400 when package version is missing', async () => {
+      // Create an Express app and use the router
+      const app = express();
+      app.use(express.json());
+      app.use('/', fetchPackagesRouter);
+  
+      // Send POST request with missing package version
+      const response = await request(app)
+        .post(`/packages`)
+        .send([{ Name: 'TestPackage1' }])
+        .expect(400);
+  
+      expect(response.body).toHaveProperty('message', 'Package Version is required');
+    });
+  
+    test('should handle version range filtering', async () => {
+      const packageData = [
+        {
+          id: '1',
+          package_name: 'TestPackage1',
+          package_version: '1.5.0',
+        }
+      ];
+  
+      // Mock db execute to return package data
+      executeMock.mockResolvedValueOnce([packageData]);
+  
+      // Create an Express app and use the router
+      const app = express();
+      app.use(express.json());
+      app.use('/', fetchPackagesRouter);
+  
+      // Send POST request with version range
+      const response = await request(app)
+        .post(`/packages`)
+        .send([{ Name: 'TestPackage1', Version: '1.0.0-2.0.0' }])
+        .expect(200);
+  
+      // Check response
+      expect(response.body).toEqual([
+        { ID: '1', Name: 'TestPackage1', Version: '1.5.0' }
+      ]);
+  
+      // Check that db execute was called with correct query
+      expect(executeMock).toHaveBeenCalledWith(
+        'SELECT * FROM packages WHERE package_name = ? AND package_Version >= ? AND package_Version <= ?',
+        ['TestPackage1', '1.0.0', '2.0.0']
       );
     });
   });

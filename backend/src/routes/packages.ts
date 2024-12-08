@@ -54,9 +54,10 @@ router.post('/packages', async (req, res) => {
       } else if (Version.startsWith('~') || Version.startsWith('^')) {
         // Tilde and Caret ranges
         query += ' AND package_Version LIKE ?';
-        let modifiedVersion = Version.slice(1); // Remove the tilde or caret
-        modifiedVersion = modifiedVersion.replace(/\d+$/, '%'); // Replace the last numeric segment with '%'
-        queryParams.push(modifiedVersion);
+        let version_query = Version.replace('~', '').replace('^', '');
+        version_query += '%';
+        queryParams.push(version_query);
+
       } else {
         // Exact Version
         query += ' AND package_Version = ?';
