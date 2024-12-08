@@ -1,3 +1,7 @@
+jest.mock('../routes/db', () => ({
+  getDBConnection: jest.fn().mockResolvedValue({ /* fake connection */ })
+}));
+
 import request from 'supertest';
 import app from '../server';
 
