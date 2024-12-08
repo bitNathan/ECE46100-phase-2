@@ -1,6 +1,6 @@
 import { graphqlRequest } from '../graphql_request';
 import logger from '../logger';
-import { getLicense } from '../license';
+import { getLicense } from '../metrics/license';
 
 // 6 test cases
 

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import logger from './logger';
+import logger from '../logger';
 
 // Function to get pull request data
 export async function getPullRequestCodeReview(owner: string, repo: string): Promise<number> {

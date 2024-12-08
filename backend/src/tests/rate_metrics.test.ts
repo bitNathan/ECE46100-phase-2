@@ -1,10 +1,10 @@
 // rate_metrics.test.ts
-import { calculateRateMetrics } from '../rate_metrics';
-import { getPullRequestCodeReview } from '../pull_request_code_review';
+import { calculateRateMetrics } from '../metrics/rate_metrics';
+import { getPullRequestCodeReview } from '../metrics/pull_request_code_review';
 import { getDependencies } from '../dependency_parser';
 
 // Mock all dependencies
-jest.mock('../pull_request_code_review');
+jest.mock('../metrics/pull_request_code_review');
 jest.mock('../dependency_parser');
 
 describe('Rate Metrics Calculation', () => {
