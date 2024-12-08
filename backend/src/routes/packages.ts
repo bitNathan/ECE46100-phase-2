@@ -6,13 +6,9 @@ const router = express.Router();
 // Route to get all items from the registry table
 router.post('/packages', async (req, res) => {
   try {
-    const {
-      packageId,
-      version
-    } = req.body;
+    const [{ Name, Version }] = req.body;
     const offset = req.query.offset || 0;
     const offsetInt = parseInt(offset as string, 10);
-    
     const pageSize = 10;
     let query = 'SELECT * FROM packages';
     let queryParams: any[] = [];
@@ -26,29 +22,45 @@ router.post('/packages', async (req, res) => {
       return;
     }
 
-    // get packageId if specified
-    if (packageId){
+    // get Name if specified
+    if (!Name) {
+      res.status(400).json({ message: 'Package Name is required' });
+      return;
+    }
+    else if (Name == '*') {
+      // Wildcard: fetch all packages
+      query += ' WHERE package_name IS NOT NULL';
+    }
+    else {
       query += ' WHERE package_name = ?';
-      queryParams = [packageId];
+      queryParams = [Name];
     }
 
-    // Handle version filtering if specified
-    if (version) {
-      if (version.includes('-')) {
+    // Handle Version filtering if specified
+    if (!Version) {
+      res.status(400).json({ message: 'Package Version is required' });
+      return;
+    }
+    else{
+      if (Version === '*') {
+        // Wildcard: fetch all Versions
+        query += ' AND package_Version IS NOT NULL';
+      }
+      else if (Version.includes('-')) {
         // Bounded range: "1.2.3-2.1.0"
-        const [minVersion, maxVersion] = version.split('-');
-        query += ' AND package_version >= ? AND package_version <= ?';
+        const [minVersion, maxVersion] = Version.split('-');
+        query += ' AND package_Version >= ? AND package_Version <= ?';
         queryParams.push(minVersion, maxVersion);
-      } else if (version.startsWith('~') || version.startsWith('^')) {
+      } else if (Version.startsWith('~') || Version.startsWith('^')) {
         // Tilde and Caret ranges
-        query += ' AND package_version LIKE ?';
-        let modifiedVersion = version.slice(1); // Remove the tilde or caret
+        query += ' AND package_Version LIKE ?';
+        let modifiedVersion = Version.slice(1); // Remove the tilde or caret
         modifiedVersion = modifiedVersion.replace(/\d+$/, '%'); // Replace the last numeric segment with '%'
         queryParams.push(modifiedVersion);
       } else {
-        // Exact version
-        query += ' AND package_version = ?';
-        queryParams.push(version);
+        // Exact Version
+        query += ' AND package_Version = ?';
+        queryParams.push(Version);
       }
     }
 

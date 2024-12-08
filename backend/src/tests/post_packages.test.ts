@@ -50,7 +50,7 @@ jest.mock('../routes/db', () => {
       // Send POST request
       const response = await request(app)
         .post(`/packages`)
-        .send({})
+        .send([{ Name: '*', Version: '*' }])
         .expect(200);
   
       // Check response
@@ -60,7 +60,7 @@ jest.mock('../routes/db', () => {
       ]);
   
       // Check that db execute was called with correct query
-      expect(executeMock).toHaveBeenCalledWith('SELECT * FROM packages', []);
+      expect(executeMock).toHaveBeenCalledWith('SELECT * FROM packages WHERE package_name IS NOT NULL AND package_Version IS NOT NULL', []);
     });
   
     test('should return 404 when no packages are found', async () => {
@@ -75,13 +75,13 @@ jest.mock('../routes/db', () => {
       // Send POST request
       const response = await request(app)
         .post(`/packages`)
-        .send({})
+        .send([{ Name: '*', Version: '*' }])
         .expect(404);
   
       expect(response.body).toHaveProperty('message', 'No packages found');
   
-      // Check that db execute was called
-      expect(executeMock).toHaveBeenCalledWith('SELECT * FROM packages', []);
+      // Check that db execute was called with correct query
+      expect(executeMock).toHaveBeenCalledWith('SELECT * FROM packages WHERE package_name IS NOT NULL AND package_Version IS NOT NULL', []);
     });
   
     test('should return 500 when database connection fails', async () => {
@@ -104,7 +104,7 @@ jest.mock('../routes/db', () => {
       // Send POST request
       const response = await request(app)
         .post(`/packages`)
-        .send({})
+        .send([{ Name: '*', Version: '*' }])
         .expect(500);
   
       expect(response.body).toHaveProperty('message', 'Database connection failed');
@@ -125,13 +125,29 @@ jest.mock('../routes/db', () => {
       // Send POST request
       const response = await request(app)
         .post(`/packages`)
-        .send({})
+        .send([{ Name: '*', Version: '*' }])
         .expect(500);
   
       expect(response.body).toHaveProperty('message', 'Server Error fetching registry items');
   
       // Check that db execute was called
-      expect(executeMock).toHaveBeenCalledWith('SELECT * FROM packages', []);
+      expect(executeMock).toHaveBeenCalledWith('SELECT * FROM packages WHERE package_name IS NOT NULL AND package_Version IS NOT NULL', []);
+    });
+
+    // should return 400 with bad request
+    test('should return 400 with bad request', async () => {
+      // Create an Express app and use the router
+      const app = express();
+      app.use(express.json());
+      app.use('/', fetchPackagesRouter);
+  
+      // Send POST request
+      const response = await request(app)
+        .post(`/packages`)
+        .send([{}])
+        .expect(400);
+  
+      expect(response.body).toHaveProperty('message', 'Package Name is required');
     });
   
     test('should handle packageId and version filtering', async () => {
@@ -154,7 +170,7 @@ jest.mock('../routes/db', () => {
       // Send POST request with packageId and version
       const response = await request(app)
         .post(`/packages`)
-        .send({ packageId: 'TestPackage1', version: '1.0.0' })
+        .send([{ "Name": "TestPackage1", "Version": "1.0.0" }])
         .expect(200);
   
       // Check response
@@ -164,7 +180,7 @@ jest.mock('../routes/db', () => {
   
       // Check that db execute was called with correct query
       expect(executeMock).toHaveBeenCalledWith(
-        'SELECT * FROM packages WHERE package_name = ? AND package_version = ?',
+        'SELECT * FROM packages WHERE package_name = ? AND package_Version = ?',
         ['TestPackage1', '1.0.0']
       );
     });
