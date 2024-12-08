@@ -52,11 +52,11 @@ router.post('/packages', async (req, res) => {
         query += ' AND package_Version >= ? AND package_Version <= ?';
         queryParams.push(minVersion, maxVersion);
       } else if (Version.startsWith('~') || Version.startsWith('^')) {
-        // Tilde and Caret ranges
-        query += ' AND package_Version LIKE ?';
-        let version_query = Version.replace('~', '').replace('^', '');
-        version_query += '%';
-        queryParams.push(version_query);
+        // Tilde and Caret ranges// Tilde and Caret ranges
+        query += ' AND package_version LIKE ?';
+        let modifiedVersion = Version.slice(1); // Remove the tilde or caret
+        modifiedVersion = modifiedVersion.replace(/\d+$/, '%'); // Replace the last numeric segment with '%'
+        queryParams.push(modifiedVersion);
 
       } else {
         // Exact Version
