@@ -15,11 +15,11 @@ const SearchPackagesByRegex: React.FC = () => {
 
     try {
       const data = await getPackagesByRegEx(regex);
-      setSearchResults(data);
-      console.log(data);
+      setSearchResults(data || []);
       alert('Packages fetched successfully!');
     } catch (error) {
       console.error('Error fetching package:', error);
+      setSearchResults([]);
       alert('Failed to fetch packages');
     } finally {
       setIsLoading(false);
@@ -29,7 +29,7 @@ const SearchPackagesByRegex: React.FC = () => {
   // Calculate the current items to display
   const indexOfLastItem = (currentPage + 1) * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = searchResults.slice(indexOfFirstItem, indexOfLastItem);
+  const currentItems = (searchResults || []).slice(indexOfFirstItem, indexOfLastItem);
 
   // Pagination handlers
   const handleNext = () => {

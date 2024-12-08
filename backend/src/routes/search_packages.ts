@@ -13,9 +13,8 @@ router.post('/package/byRegEx', async (req: any, res: any) => {
     }
 
     try {
-        // Assume db_connection is your database connection and is set up to use promises
-        // const query = `SELECT * FROM packages WHERE package_name REGEXP ? OR readme REGEXP ?`;
-        const query = `SELECT * FROM packages WHERE package_name REGEXP ?`;
+        
+        const query = `SELECT * FROM packages WHERE package_name REGEXP ? OR readme REGEXP ?`;
         
         // Establish db connection
         const db_connection = await dbConnectionPromise; 
@@ -25,7 +24,7 @@ router.post('/package/byRegEx', async (req: any, res: any) => {
             return res.status(500).json({ message: 'Database connection failed' });
         }
 
-        const [rows] = await db_connection.execute(query, [RegEx]);
+        const [rows] = await db_connection.execute(query, [RegEx, RegEx]);
 
         if (rows.length === 0) {
             return res.status(404).json({ message: "No package found under this regex." });
