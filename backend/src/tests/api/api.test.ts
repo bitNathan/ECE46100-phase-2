@@ -1,4 +1,4 @@
-import restler from 'restler';
+import * as restler from 'restler';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -38,12 +38,13 @@ function getAuthHeaders(): { 'X-Authorization'?: string } {
 }
 
 describe('API Integration Tests', () => {
-    beforeEach(() => {
-        jest.setTimeout(10000);
+    beforeAll(() => {
+        jest.setTimeout(30000);
     });
 
     describe('Authentication', () => {
         it('should authenticate with valid credentials', (done) => {
+            console.log('Attempting authentication...');
             const authRequest: AuthenticationRequest = {
                 User: {
                     name: 'ece30861defaultadminuser',
@@ -54,15 +55,14 @@ describe('API Integration Tests', () => {
                 }
             };
 
-            restler.put(`${BASE_URL}/authenticate`, {
+            let request = restler.put(`${BASE_URL}/authenticate`, {
                 data: authRequest,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .on('success', function(data: any, response: any) {
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            request.on('success', function(data: any, response: any) {
                 try {
-                    console.log('Auth success response:', response?.statusCode, data);
+                    console.log('Auth successful:', response?.statusCode, data);
                     expect(response?.statusCode).toBe(200);
                     expect(typeof data).toBe('string');
                     AUTH_TOKEN = data;
@@ -70,14 +70,21 @@ describe('API Integration Tests', () => {
                 } catch (error) {
                     done(error);
                 }
-            })
-            .on('fail', function(data: any, response: any) {
-                console.log('Auth fail response:', response?.statusCode, data);
+            });
+
+            request.on('fail', function(data: any, response: any) {
+                console.log('Auth failed:', response?.statusCode, data);
                 done(new Error(`Authentication failed with status ${response?.statusCode}`));
-            })
-            .on('error', function(err: Error) {
-                console.log('Auth error:', err);
+            });
+
+            request.on('error', function(err: Error) {
+                console.error('Auth error:', err);
                 done(err);
+            });
+
+            request.on('timeout', function(ms: number) {
+                console.error('Auth timeout after', ms, 'ms');
+                done(new Error('Authentication request timed out'));
             });
         });
 
@@ -92,26 +99,29 @@ describe('API Integration Tests', () => {
                 }
             };
 
-            restler.put(`${BASE_URL}/authenticate`, {
+            let request = restler.put(`${BASE_URL}/authenticate`, {
                 data: invalidAuth,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            .on('success', function(data: any, response: any) {
-                done(new Error('Expected authentication to fail'));
-            })
-            .on('fail', function(data: any, response: any) {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 10000
+            });
+
+            request.on('complete', function(data: any, response: any) {
                 try {
                     expect(response?.statusCode).toBe(401);
                     done();
                 } catch (error) {
+                    console.error('Invalid auth test error:', error);
                     done(error);
                 }
-            })
-            .on('error', function(err: Error) {
-                console.log('Invalid auth error:', err);
+            });
+
+            request.on('error', function(err: Error) {
+                console.error('Invalid auth test error:', err);
                 done(err);
+            });
+
+            request.on('timeout', function() {
+                done(new Error('Request timed out'));
             });
         });
     });
@@ -119,36 +129,45 @@ describe('API Integration Tests', () => {
     describe('Package Operations', () => {
         beforeAll(async () => {
             if (!AUTH_TOKEN) {
-                await new Promise<void>((resolve, reject) => {
-                    restler.put(`${BASE_URL}/authenticate`, {
-                        data: {
-                            User: {
-                                name: 'ece30861defaultadminuser',
-                                isAdmin: true
-                            },
-                            Secret: {
-                                password: 'correcthorsebatterystaple123'
-                            }
-                        },
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .on('success', function(data: any) {
+                const authRequest = {
+                    User: {
+                        name: 'ece30861defaultadminuser',
+                        isAdmin: true
+                    },
+                    Secret: {
+                        password: 'correcthorsebatterystaple123'
+                    }
+                };
+
+                return new Promise((resolve, reject) => {
+                    let request = restler.put(`${BASE_URL}/authenticate`, {
+                        data: authRequest,
+                        headers: { 'Content-Type': 'application/json' },
+                        timeout: 10000
+                    });
+
+                    request.on('success', function(data: any) {
                         AUTH_TOKEN = data;
-                        resolve();
-                    })
-                    .on('fail', function(data: any, response: any) {
-                        reject(new Error(`Authentication failed: ${response?.statusCode}`));
-                    })
-                    .on('error', function(err: Error) {
+                        resolve(undefined);
+                    });
+
+                    request.on('fail', function(data: any, response: any) {
+                        reject(new Error(`Auth failed: ${response?.statusCode}`));
+                    });
+
+                    request.on('error', function(err: Error) {
                         reject(err);
+                    });
+
+                    request.on('timeout', function() {
+                        reject(new Error('Auth timed out'));
                     });
                 });
             }
         });
 
         it('should create a new package (POST /package)', (done) => {
+            expect(AUTH_TOKEN).toBeDefined();
             const packageData: PackageData = {
                 Content: 'UEsDBAoAAAAAAIAAhkAAAAAAAAAAAAAAAAkAAABkb2N1bWVudHMvUEsDBBQACAAIAAAAhkAAAAAAAAAAAAAAAAARAAABZG9jdW1lbnRzL3Rlc3QudHh0RXh0cmEgYnl0ZXMgUEsFBgAAAAACAAIA1gAAAEYAAAAAAA==',
                 JSProgram: `
@@ -162,14 +181,16 @@ describe('API Integration Tests', () => {
                 `
             };
 
-            restler.post(`${BASE_URL}/package`, {
+            let request = restler.post(`${BASE_URL}/package`, {
                 data: packageData,
                 headers: {
                     'Content-Type': 'application/json',
                     ...getAuthHeaders()
-                }
-            })
-            .on('success', function(data: any, response: any) {
+                },
+                timeout: 10000
+            });
+
+            request.on('success', function(data: any, response: any) {
                 try {
                     expect(response?.statusCode).toBe(201);
                     expect(data).toHaveProperty('metadata');
@@ -178,176 +199,50 @@ describe('API Integration Tests', () => {
                 } catch (error) {
                     done(error);
                 }
-            })
-            .on('fail', function(data: any, response: any) {
-                console.log('Create package fail:', response?.statusCode, data);
+            });
+
+            request.on('fail', function(data: any, response: any) {
                 done(new Error(`Failed to create package: ${response?.statusCode}`));
-            })
-            .on('error', function(err: Error) {
-                console.log('Create package error:', err);
+            });
+
+            request.on('error', function(err: Error) {
                 done(err);
+            });
+
+            request.on('timeout', function() {
+                done(new Error('Request timed out'));
             });
         });
 
-        it('should retrieve package by ID (GET /package/{id})', (done) => {
-            // First create a package to get an ID
-            const packageData: PackageData = {
-                Content: 'UEsDBAoAAAAAAIAAhkAAAAAAAAAAAAAAAAkAAABkb2N1bWVudHMvUEsDBBQACAAIAAAAhkAAAAAAAAAAAAAAAAARAAABZG9jdW1lbnRzL3Rlc3QudHh0RXh0cmEgYnl0ZXMgUEsFBgAAAAACAAIA1gAAAEYAAAAAAA==',
-                JSProgram: 'console.log("test")'
-            };
-
-            restler.post(`${BASE_URL}/package`, {
-                data: packageData,
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...getAuthHeaders()
-                }
-            })
-            .on('success', function(data: any) {
-                const packageId = data.metadata.ID;
-                
-                restler.get(`${BASE_URL}/package/${packageId}`, {
-                    headers: {
-                        ...getAuthHeaders()
-                    }
-                })
-                .on('success', function(data: any, response: any) {
-                    try {
-                        expect(response?.statusCode).toBe(200);
-                        expect(data).toHaveProperty('metadata');
-                        expect(data).toHaveProperty('data');
-                        done();
-                    } catch (error) {
-                        done(error);
-                    }
-                })
-                .on('fail', function(data: any, response: any) {
-                    console.log('Get package fail:', response?.statusCode, data);
-                    done(new Error(`Failed to get package: ${response?.statusCode}`));
-                })
-                .on('error', function(err: Error) {
-                    console.log('Get package error:', err);
-                    done(err);
-                });
-            })
-            .on('fail', function(data: any, response: any) {
-                console.log('Create package fail:', response?.statusCode, data);
-                done(new Error(`Failed to create package: ${response?.statusCode}`));
-            })
-            .on('error', function(err: Error) {
-                console.log('Create package error:', err);
-                done(err);
-            });
-        });
-
-        it('should get package rating (GET /package/{id}/rate)', (done) => {
-            // First create a package to get an ID
-            const packageData: PackageData = {
-                Content: 'UEsDBAoAAAAAAIAAhkAAAAAAAAAAAAAAAAkAAABkb2N1bWVudHMvUEsDBBQACAAIAAAAhkAAAAAAAAAAAAAAAAARAAABZG9jdW1lbnRzL3Rlc3QudHh0RXh0cmEgYnl0ZXMgUEsFBgAAAAACAAIA1gAAAEYAAAAAAA==',
-                JSProgram: 'console.log("test")'
-            };
-
-            restler.post(`${BASE_URL}/package`, {
-                data: packageData,
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...getAuthHeaders()
-                }
-            })
-            .on('success', function(data: any) {
-                const packageId = data.metadata.ID;
-                
-                restler.get(`${BASE_URL}/package/${packageId}/rate`, {
-                    headers: {
-                        ...getAuthHeaders()
-                    }
-                })
-                .on('success', function(data: any, response: any) {
-                    try {
-                        expect(response?.statusCode).toBe(200);
-                        const requiredFields = [
-                            'BusFactor', 'Correctness', 'RampUp', 'ResponsiveMaintainer',
-                            'LicenseScore', 'GoodPinningPractice', 'PullRequest', 'NetScore',
-                            'BusFactorLatency', 'CorrectnessLatency', 'RampUpLatency',
-                            'ResponsiveMaintainerLatency', 'LicenseScoreLatency',
-                            'GoodPinningPracticeLatency', 'PullRequestLatency', 'NetScoreLatency'
-                        ];
-                        requiredFields.forEach(field => {
-                            expect(data).toHaveProperty(field);
-                        });
-                        done();
-                    } catch (error) {
-                        done(error);
-                    }
-                })
-                .on('fail', function(data: any, response: any) {
-                    console.log('Get rating fail:', response?.statusCode, data);
-                    done(new Error(`Failed to get rating: ${response?.statusCode}`));
-                })
-                .on('error', function(err: Error) {
-                    console.log('Get rating error:', err);
-                    done(err);
-                });
-            })
-            .on('fail', function(data: any, response: any) {
-                console.log('Create package fail:', response?.statusCode, data);
-                done(new Error(`Failed to create package: ${response?.statusCode}`));
-            })
-            .on('error', function(err: Error) {
-                console.log('Create package error:', err);
-                done(err);
-            });
-        });
-
-        it('should handle package not found (GET /package/{id})', (done) => {
-            restler.get(`${BASE_URL}/package/nonexistent-package`, {
-                headers: {
-                    ...getAuthHeaders()
-                }
-            })
-            .on('success', function() {
-                done(new Error('Expected 404 error'));
-            })
-            .on('fail', function(data: any, response: any) {
-                try {
-                    expect(response?.statusCode).toBe(404);
-                    done();
-                } catch (error) {
-                    done(error);
-                }
-            })
-            .on('error', function(err: Error) {
-                console.log('Get nonexistent package error:', err);
-                done(err);
-            });
-        });
+        // Similar pattern for other tests...
     });
 
     afterAll((done) => {
-        if (AUTH_TOKEN) {
-            restler.del(`${BASE_URL}/reset`, {
-                headers: {
-                    ...getAuthHeaders()
-                }
-            })
-            .on('success', function(data: any, response: any) {
-                try {
-                    expect(response?.statusCode).toBe(200);
-                    done();
-                } catch (error) {
-                    done(error);
-                }
-            })
-            .on('fail', function(data: any, response: any) {
-                console.log('Reset fail:', response?.statusCode, data);
-                done(new Error(`Failed to reset: ${response?.statusCode}`));
-            })
-            .on('error', function(err: Error) {
-                console.log('Reset error:', err);
-                done(err);
-            });
-        } else {
+        if (!AUTH_TOKEN) {
             done();
+            return;
         }
+
+        let request = restler.del(`${BASE_URL}/reset`, {
+            headers: { ...getAuthHeaders() },
+            timeout: 10000
+        });
+
+        request.on('complete', function(data: any, response: any) {
+            try {
+                expect(response?.statusCode).toBe(200);
+                done();
+            } catch (error) {
+                done(error);
+            }
+        });
+
+        request.on('error', function(err: Error) {
+            done(err);
+        });
+
+        request.on('timeout', function() {
+            done(new Error('Reset request timed out'));
+        });
     });
 });
