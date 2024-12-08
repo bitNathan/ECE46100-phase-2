@@ -172,9 +172,11 @@ export const resetRegistry = async () => {
   }
 };
 
-export const getPackageCost = async (packageId: string) => {
+export const getPackageCost = async (packageId: string, includeDependencies: boolean) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/package/${packageId}/cost`);
+    // Append the dependency query parameter if needed
+    const url = `${API_BASE_URL}/package/${packageId}/cost${includeDependencies ? '?dependency=true' : ''}`;
+    const response = await axios.get(url);
     return response.data;
   } catch (error) {
     console.error('Error fetching package cost:', error);

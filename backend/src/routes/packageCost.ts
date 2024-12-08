@@ -132,7 +132,7 @@ const loadLocalPackage = async (db_connection: any, packageId: string): Promise<
   }
 
   const contentBuffer = Buffer.from(row.content, 'base64');
-  console.log('Content buffer length (bytes):', contentBuffer.length);
+
   const packageJson = extractPackageJsonFromZip(contentBuffer);
   if (!packageJson) {
     return null;
@@ -208,7 +208,6 @@ const resolvePackageData = async (
         resolvedPackageJson = npmResult.packageJson;
         standaloneCost = npmResult.standaloneCost;
       } else {
-        console.warn(`Package ${finalName}@${finalVersion} not found on npm`);
         // Not found on npm - treat as no dependencies and zero size
         standaloneCost = 0;
         resolvedPackageJson = { dependencies: {} };

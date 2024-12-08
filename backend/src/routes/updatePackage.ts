@@ -192,14 +192,19 @@ router.post('/package/:id', async (req, res) => {
       // Extract README file content
       try {
         const zip = new AdmZip(packageBuffer); // Initialize zip handler
-        const readmeEntry = zip.getEntries().find((entry) => 
-          entry.entryName.toLowerCase().endsWith('readme.md') // Look for README files
-        );
-    
+
+        // List of possible README file names to check
+        const readmeCandidates = ['README.md', 'Readme.md', 'readme.md', 'readme.txt', 'README.txt', 'Readme.txt', 'README', 'Readme', 'readme'];
+        const readmeEntry = readmeCandidates
+          .map((candidate) =>
+            zip.getEntries().find((entry) => entry.entryName.endsWith(candidate))
+          )
+          .find((entry) => entry); // Stop at the first match
+
         if (readmeEntry) {
           readmeContent = readmeEntry.getData().toString('utf-8'); // Extract README content
         } else {
-          console.warn('No README.md file found in the uploaded content');
+          console.warn('No README.md, Readme.md, or readme.md file found in the uploaded content');
         }
       } catch (error) {
         console.warn('Error reading README.md from content:', error);
@@ -220,23 +225,19 @@ router.post('/package/:id', async (req, res) => {
         axiosResponse = await axios.get(githubZipUrl, { responseType: 'arraybuffer' });
         packageBuffer = Buffer.from(axiosResponse.data);
 
-        // Attempt to fetch README
-        try {
-          const readmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/README.md`;
-          const readmeResponse = await axios.get(readmeUrl);
-          if (readmeResponse && readmeResponse.status === 200) {
-            readmeContent = readmeResponse.data;
-          }
-        } catch {
-          // try lowercase readme.md
+        // Fetch README file
+        let readmeResponse = null;
+        const readmeCandidates = ['README.md', 'Readme.md', 'readme.md', 'readme.txt', 'README.txt', 'Readme.txt', 'README', 'Readme', 'readme'];
+        for (const candidate of readmeCandidates) {
           try {
-            const readmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/readme.md`;
-            const readmeResponse = await axios.get(readmeUrl);
+            const readmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${candidate}`;
+            readmeResponse = await axios.get(readmeUrl);
             if (readmeResponse && readmeResponse.status === 200) {
               readmeContent = readmeResponse.data;
+              break; // Stop once we find a valid README
             }
-          } catch {
-            // no readme found
+          } catch (error) {
+            // Ignore errors and try the next candidate
           }
         }
       } catch (error) {
