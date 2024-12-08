@@ -1,4 +1,4 @@
-import { calculateDependencyPinning } from '../rate_metrics'; // Adjust this path if needed
+import { calculateDependencyPinning } from '../metrics/rate_metrics'; // Adjust this path if needed
 import { getDependencies } from '../dependency_parser';
 
 jest.mock('../dependency_parser'); // Mocking the entire module

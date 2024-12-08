@@ -1,6 +1,6 @@
 import { graphqlRequest } from '../graphql_request';
 import logger from '../logger';
-import { getBusFactor } from '../bus_factor';
+import { getBusFactor } from '../metrics/bus_factor';
 
 // 3 test cases
 
