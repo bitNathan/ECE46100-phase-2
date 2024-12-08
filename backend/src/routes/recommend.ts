@@ -29,7 +29,7 @@ router.post('/recommend', async (req, res) => {
 
         // Clean up the response to ensure newlines and remove bold markers
         let responseContent = completion.choices[0].message.content || 'Unable to Perform the Request';
-        responseContent = responseContent.replace(/\*\*/g, '').trim();
+        //responseContent = responseContent.replace(/\*\*/g, '').trim();
 
         // Build the response object
         const response = {

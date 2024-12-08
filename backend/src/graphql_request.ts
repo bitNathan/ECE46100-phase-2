@@ -1,5 +1,5 @@
 import config from "./config_env";
-
+import logger from "./logger";
 export async function graphqlRequest(query: string)
 {
     // We fetch using post method
@@ -13,6 +13,9 @@ export async function graphqlRequest(query: string)
     const responseJson = await response.json();
 
     const errors = responseJson?.errors;
+
+    logger.debug("Response from GitHub API: " + JSON.stringify(responseJson));
+    logger.error("Errors from GitHub API: " + JSON.stringify(errors));
 
     if (response.ok)
     {

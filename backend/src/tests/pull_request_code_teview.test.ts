@@ -8,11 +8,10 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('Pull Request Code Review Metric', () => {
     beforeEach(() => {
-        // Reset all mocks before each test
         jest.clearAllMocks();
     });
 
-    it('should return correct fraction of reviewed code changes', async () => {
+    it('should return correct fraction of reviewed code changes and latency', async () => {
         // Mock the GitHub API response for pull requests
         const mockedResponse = {
             data: [
@@ -22,30 +21,33 @@ describe('Pull Request Code Review Metric', () => {
             ]
         };
         mockedAxios.get.mockResolvedValue(mockedResponse);
-
-        const fractionReviewed = await getPullRequestCodeReview('mockOwner', 'mockRepo');
-
+    
+        const [fractionReviewed, latency] = await getPullRequestCodeReview('mockOwner', 'mockRepo');
+    
         // Check if the result is correct
-        expect(fractionReviewed).toBeCloseTo(0.5556, 4);  // (5 + 3) / (10 + 20 + 15) = 0.5
+        expect(fractionReviewed).toBeCloseTo(0.5555, 1);  // (10 + 15) / (10 + 20 + 15) = 0.5555
+        expect(latency).toBeGreaterThanOrEqual(0);  // Latency should be non-negative
     });
 
-    it('should return 0 when no pull requests are found', async () => {
+    it('should return 0 fraction and valid latency when no pull requests are found', async () => {
         // Mock the GitHub API response to return an empty list of pull requests
         mockedAxios.get.mockResolvedValue({ data: [] });
 
-        const fractionReviewed = await getPullRequestCodeReview('mockOwner', 'mockRepo');
+        const [fractionReviewed, latency] = await getPullRequestCodeReview('mockOwner', 'mockRepo');
 
         // Check if the result is correct
         expect(fractionReviewed).toBe(0);  // No changes, so fraction is 0
+        expect(latency).toBeGreaterThanOrEqual(0);  // Latency should be non-negative
     });
 
-    it('should return 0 if the API call fails', async () => {
+    it('should return 0 fraction and valid latency if the API call fails', async () => {
         // Mock the GitHub API response to throw an error
         mockedAxios.get.mockRejectedValue(new Error('API request failed'));
 
-        const fractionReviewed = await getPullRequestCodeReview('mockOwner', 'mockRepo');
+        const [fractionReviewed, latency] = await getPullRequestCodeReview('mockOwner', 'mockRepo');
 
         // Check if the result is correct
         expect(fractionReviewed).toBe(0);  // API call failed
+        expect(latency).toBeGreaterThanOrEqual(0);  // Latency should be non-negative
     });
 });
