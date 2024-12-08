@@ -8,7 +8,10 @@ const API_BASE_URL = 'http://localhost:3000';
 
 export const getPackages = async (offset: number) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/packages`, null, {
+    const response = await axios.post(`${API_BASE_URL}/packages`, [{
+      Name: "*",
+      Version: "*"
+    }], {
       params: { offset },
     });
     return response.data;
