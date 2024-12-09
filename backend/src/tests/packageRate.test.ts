@@ -8,7 +8,11 @@ jest.mock('../routes/db', () => ({
   })
 }));
 
+<<<<<<< HEAD
+// Mock all dependency functions
+=======
 // Mock all metric functions
+>>>>>>> main
 jest.mock('../metrics/bus_factor', () => ({
   getBusFactor: jest.fn().mockResolvedValue([0.8, 0.1])
 }));
@@ -29,8 +33,13 @@ jest.mock('../metrics/license', () => ({
   getLicense: jest.fn().mockResolvedValue([1.0, 0.1])
 }));
 
+<<<<<<< HEAD
+jest.mock('../metrics/pull_request_code_review', () => ({
+  getPullRequestCodeReview: jest.fn().mockResolvedValue([0.75, 0.1])
+=======
 jest.mock('../metrics/dependency_pinning', () => ({
   calculateDependencyPinning: jest.fn().mockResolvedValue([0.95, 0.1])
+>>>>>>> main
 }));
 
 jest.mock('../metrics/pull_request_code_review', () => ({
@@ -122,4 +131,48 @@ describe('packageRateHandler', () => {
 
     expect(body.NetScore).toBeCloseTo(calculatedNetScore, 2);
   });
+<<<<<<< HEAD
+
+  // Test 500 - Rating System Error
+  it('should return 500 if rating calculation fails', async () => {
+    const mockPackage = {
+      id: '123',
+      name: 'test-package',
+      version: '1.0.0',
+      url: 'https://github.com/test/repo'
+    };
+
+    mockDb.execute.mockResolvedValueOnce([[mockPackage]]);
+
+    // Mock bus factor calculation to fail
+    const busFactorMock = require('../metrics/bus_factor').getBusFactor;
+    busFactorMock.mockRejectedValueOnce(new Error('Rating calculation failed'));
+
+    const response = await packageRateHandler('123');
+    expect(response.statusCode).toBe(500);
+    expect(JSON.parse(response.body).error).toBe('Rating system failed');
+  });
+
+  // Test invalid URL
+  it('should return 500 if URL is invalid', async () => {
+    const mockPackage = {
+      id: '123',
+      name: 'test-package',
+      version: '1.0.0',
+      url: 'invalid-url'
+    };
+
+    mockDb.execute.mockResolvedValueOnce([[mockPackage]]);
+
+    // Mock URL parsing to fail
+    const parseURLMock = require('../url_parse').parseURL;
+    parseURLMock.mockResolvedValueOnce([null, null]);
+
+    const response = await packageRateHandler('123');
+    expect(response.statusCode).toBe(500);
+    expect(JSON.parse(response.body).error).toBe('Invalid repository URL');
+  });
 });
+=======
+});
+>>>>>>> main

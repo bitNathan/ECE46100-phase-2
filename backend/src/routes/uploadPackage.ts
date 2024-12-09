@@ -52,7 +52,6 @@ router.post('/package', async (req, res) => {
     let repo = '';
 
     if (Content) {
-
       // Validate Base64 Content
       if (!isBase64(Content, { allowEmpty: false })) {
         res.status(400).json({ message: 'Invalid Base64 Content' });

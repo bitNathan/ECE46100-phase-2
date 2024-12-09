@@ -1,16 +1,25 @@
 import React from 'react';
+<<<<<<< HEAD
+import { render, screen, fireEvent } from '@testing-library/react';
+import DownloadPackage from '../components/DownloadPackage';
+import '@testing-library/jest-dom';
+=======
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import DownloadPackage from '../components/DownloadPackage';
 import '@testing-library/jest-dom';
 import * as api from '../services/api';
+>>>>>>> main
 
 jest.mock('../services/api', () => ({
   downloadPackage: jest.fn(),
   downloadPackageByNameVersion: jest.fn(),
 }));
 
+<<<<<<< HEAD
+=======
 
 
+>>>>>>> main
 test('renders download forms', () => {
   render(<DownloadPackage />);
 
@@ -34,6 +43,8 @@ test('allows typing in text fields for name/version', () => {
   expect(nameInput).toHaveValue('test-pkg');
   expect(versionInput).toHaveValue('1.0.0');
 });
+<<<<<<< HEAD
+=======
 
 test('triggers download by ID when form submitted', async () => {
   const { downloadPackage } = require('../services/api');
@@ -70,3 +81,4 @@ test('displays error alert if the download by ID fails', async () => {
     expect(global.alert).toHaveBeenCalledWith('Package Not Found or Error Occurred.'); // Assuming this is your error message
   });
 });
+>>>>>>> main

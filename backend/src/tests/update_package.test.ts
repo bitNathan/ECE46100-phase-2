@@ -84,11 +84,40 @@ describe('POST /package/:id - Update Package Version', () => {
           debloat: false,
         }
       })
+<<<<<<< HEAD
+      .expect(200);
+
+    expect(response.body).toHaveProperty('metadata');
+    expect(response.body.metadata).toEqual({
+      Name: packageName,
+      Version: newVersion,
+      ID: newID,
+    });
+    expect(response.body).toHaveProperty('data');
+    expect(response.body.data.Content).toBe(base64Content);
+    expect(response.body.data.JSProgram).toBe('console.log("Hello World");');
+
+    // Check insert call
+    expect(executeMock).toHaveBeenCalledWith(
+      'INSERT INTO packages (id, package_name, package_version, content, url, js_program, debloat, readme) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        newID,
+        packageName,
+        newVersion,
+        packageBuffer,
+        null,
+        'console.log("Hello World");',
+        false,
+        null
+      ]
+    );
+=======
 
     expect(response.body).toBeDefined()
 
     // Check insert call
     expect(executeMock).toHaveBeenCalledTimes(3)
+>>>>>>> main
   });
 
   test('should successfully update an existing package version via URL ingestion (allow older patch)', async () => {
@@ -158,8 +187,20 @@ describe('POST /package/:id - Update Package Version', () => {
           debloat: false,
         }
       })
+<<<<<<< HEAD
+      .expect(200);
+
+    expect(response.body.metadata).toEqual({
+      Name: packageName,
+      Version: newVersion,
+      ID: newID,
+    });
+    expect(response.body.data.URL).toBe(packageURL);
+    expect(response.body.data.Content).toBe(base64Content);
+=======
 
     expect(response.body).toBeDefined();
+>>>>>>> main
   });
 
   test('should return 404 if the original package does not exist', async () => {
@@ -180,8 +221,14 @@ describe('POST /package/:id - Update Package Version', () => {
           Content: 'fakeContent',
         },
       })
+<<<<<<< HEAD
+      .expect(404);
+
+    expect(response.body.message).toBe('Package does not exist.');
+=======
 
     expect(response.body.message).toBeDefined();
+>>>>>>> main
   });
 
   test('should return 400 if name does not match the original package name', async () => {
@@ -204,8 +251,14 @@ describe('POST /package/:id - Update Package Version', () => {
           Content: 'ZmFrZSBwYWNrYWdlIGRhdGE=', // fake base64
         },
       })
+<<<<<<< HEAD
+      .expect(400);
+
+    expect(response.body.message).toBe('Name in metadata does not match the existing package name.');
+=======
 
     expect(response.body.message).toBeDefined();
+>>>>>>> main
   });
 
   test('should return 400 if ingestion method changed (original Content, now URL)', async () => {
@@ -228,8 +281,14 @@ describe('POST /package/:id - Update Package Version', () => {
           URL: 'https://github.com/testuser/testrepo',
         },
       })
+<<<<<<< HEAD
+      .expect(400);
+
+    expect(response.body.message).toBe('Package was originally ingested via Content, must be updated via Content only.');
+=======
 
     expect(response.body.message).toBeDefined();
+>>>>>>> main
   });
 
   test('should return 400 if ingestion method changed (original URL, now Content)', async () => {
@@ -252,8 +311,14 @@ describe('POST /package/:id - Update Package Version', () => {
           Content: 'ZmFrZSBwYWNrYWdlIGRhdGE=',
         },
       })
+<<<<<<< HEAD
+      .expect(400);
+
+    expect(response.body.message).toBe('Package was originally ingested via URL, must be updated via URL only.');
+=======
 
     expect(response.body.message).toBeDefined();
+>>>>>>> main
   });
 
   test('should return 409 if the new version already exists', async () => {
@@ -281,8 +346,14 @@ describe('POST /package/:id - Update Package Version', () => {
           Content: 'ZmFrZSBwYWNrYWdlIGRhdGE=',
         },
       })
+<<<<<<< HEAD
+      .expect(409);
+
+    expect(response.body.message).toBe('This package version already exists.');
+=======
 
     expect(response.body.message).toBe('Package does not exist.');
+>>>>>>> main
   });
 
   test('should return 400 if invalid semver version', async () => {
@@ -337,8 +408,14 @@ describe('POST /package/:id - Update Package Version', () => {
           Content: 'ZmFrZSBwYWNrYWdlIGRhdGE=',
         },
       })
+<<<<<<< HEAD
+      .expect(400);
+
+    expect(response.body.message).toBe('Patch version must be strictly greater than all existing patches for this major.minor.');
+=======
 
     expect(response.body.message).toBeDefined();
+>>>>>>> main
   });
 
   test('should return 424 if the rating is below threshold', async () => {
@@ -374,8 +451,14 @@ describe('POST /package/:id - Update Package Version', () => {
           Content: packageBuffer.toString('base64'),
         },
       })
+<<<<<<< HEAD
+      .expect(424);
+
+    expect(response.body.message).toBe('Package is not uploaded due to the disqualified rating.');
+=======
 
     expect(response.body.message).toBeDefined();
+>>>>>>> main
   });
 
   test('should return 500 if server error occurs during insert', async () => {
@@ -414,8 +497,14 @@ describe('POST /package/:id - Update Package Version', () => {
           Content: packageBuffer.toString('base64'),
         },
       })
+<<<<<<< HEAD
+      .expect(500);
+
+    expect(response.body.message).toBe('Server error during version update');
+=======
 
     expect(response.body.message).toBeDefined();
+>>>>>>> main
   });
 
   test('should return 400 if no Content or URL and package could not be fetched', async () => {
@@ -449,8 +538,15 @@ describe('POST /package/:id - Update Package Version', () => {
         },
         data: {}
       })
+<<<<<<< HEAD
+      .expect(400);
+
+    expect(response.body.message).toBe('Failed to obtain package buffer');
+  });
+=======
 
     expect(response.body.message).toBeDefined();
   });
 
+>>>>>>> main
 });

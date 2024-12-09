@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import UploadPackage from './components/UploadPackage';
 import PackageList from './components/PackageList';
 import PackageVersion from './components/PackageVersion';
-import PackageRate from './components/PackageRate';
-import PackageCost from './components/PackageCost';
 import DownloadPackage from './components/DownloadPackage';
 import SearchPackagesByRegex from './components/SearchPackagesByRegex';
 import RecommendForm from './components/RecommendForm';
@@ -27,7 +25,6 @@ const App: React.FC = () => {
   return (
     <div>
       <h1>Trustworthy Module Registry</h1>
-      {/* Tab Headers */}
       <div style={{ display: 'flex', cursor: 'pointer' }}>
         <div onClick={() => setActiveTab('UploadPackage')} style={{ padding: '10px', borderBottom: activeTab === 'UploadPackage' ? '2px solid blue' : 'none' }}>Upload Form</div>
         <div onClick={() => setActiveTab('PackageList')} style={{ padding: '10px', borderBottom: activeTab === 'PackageList' ? '2px solid blue' : 'none' }}>Package List</div>
@@ -44,8 +41,6 @@ const App: React.FC = () => {
         {activeTab === 'UploadPackage' && <UploadPackage />}
         {activeTab === 'PackageList' && <PackageList />}
         {activeTab === 'PackageVersion' && <PackageVersion />}
-        {activeTab === 'PackageRate' && <PackageRate />}
-        {activeTab === 'PackageCost' && <PackageCost />}
         {activeTab === 'DownloadPackage' && <DownloadPackage />}
         {activeTab === 'SearchPackagesByRegex' && <SearchPackagesByRegex />}
         {activeTab === 'Recommend' && <RecommendForm />}

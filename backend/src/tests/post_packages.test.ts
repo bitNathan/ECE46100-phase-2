@@ -24,7 +24,11 @@ jest.mock('../routes/db', () => {
     beforeEach(() => {
       jest.clearAllMocks();
     });
+<<<<<<< HEAD
+  
+=======
     
+>>>>>>> main
     test('should successfully retrieve all packages', async () => {
       const packageData = [
         {
@@ -50,7 +54,11 @@ jest.mock('../routes/db', () => {
       // Send POST request
       const response = await request(app)
         .post(`/packages`)
+<<<<<<< HEAD
+        .send({})
+=======
         .send([{ Name: '*', Version: '*' }])
+>>>>>>> main
         .expect(200);
   
       // Check response
@@ -60,7 +68,11 @@ jest.mock('../routes/db', () => {
       ]);
   
       // Check that db execute was called with correct query
+<<<<<<< HEAD
+      expect(executeMock).toHaveBeenCalledWith('SELECT * FROM packages', []);
+=======
       expect(executeMock).toHaveBeenCalledWith('SELECT * FROM packages WHERE package_name IS NOT NULL AND package_Version IS NOT NULL', []);
+>>>>>>> main
     });
   
     test('should return 404 when no packages are found', async () => {
@@ -75,13 +87,22 @@ jest.mock('../routes/db', () => {
       // Send POST request
       const response = await request(app)
         .post(`/packages`)
+<<<<<<< HEAD
+        .send({})
+=======
         .send([{ Name: '*', Version: '*' }])
+>>>>>>> main
         .expect(404);
   
       expect(response.body).toHaveProperty('message', 'No packages found');
   
+<<<<<<< HEAD
+      // Check that db execute was called
+      expect(executeMock).toHaveBeenCalledWith('SELECT * FROM packages', []);
+=======
       // Check that db execute was called with correct query
       expect(executeMock).toHaveBeenCalledWith('SELECT * FROM packages WHERE package_name IS NOT NULL AND package_Version IS NOT NULL', []);
+>>>>>>> main
     });
   
     test('should return 500 when database connection fails', async () => {
@@ -104,7 +125,11 @@ jest.mock('../routes/db', () => {
       // Send POST request
       const response = await request(app)
         .post(`/packages`)
+<<<<<<< HEAD
+        .send({})
+=======
         .send([{ Name: '*', Version: '*' }])
+>>>>>>> main
         .expect(500);
   
       expect(response.body).toHaveProperty('message', 'Database connection failed');
@@ -125,12 +150,19 @@ jest.mock('../routes/db', () => {
       // Send POST request
       const response = await request(app)
         .post(`/packages`)
+<<<<<<< HEAD
+        .send({})
+=======
         .send([{ Name: '*', Version: '*' }])
+>>>>>>> main
         .expect(500);
   
       expect(response.body).toHaveProperty('message', 'Server Error fetching registry items');
   
       // Check that db execute was called
+<<<<<<< HEAD
+      expect(executeMock).toHaveBeenCalledWith('SELECT * FROM packages', []);
+=======
       expect(executeMock).toHaveBeenCalledWith('SELECT * FROM packages WHERE package_name IS NOT NULL AND package_Version IS NOT NULL', []);
     });
 
@@ -148,6 +180,7 @@ jest.mock('../routes/db', () => {
         .expect(400);
   
       expect(response.body).toHaveProperty('message', 'Package Name is required');
+>>>>>>> main
     });
   
     test('should handle packageId and version filtering', async () => {
@@ -170,7 +203,11 @@ jest.mock('../routes/db', () => {
       // Send POST request with packageId and version
       const response = await request(app)
         .post(`/packages`)
+<<<<<<< HEAD
+        .send({ packageId: 'TestPackage1', version: '1.0.0' })
+=======
         .send([{ "Name": "TestPackage1", "Version": "1.0.0" }])
+>>>>>>> main
         .expect(200);
   
       // Check response
@@ -180,6 +217,12 @@ jest.mock('../routes/db', () => {
   
       // Check that db execute was called with correct query
       expect(executeMock).toHaveBeenCalledWith(
+<<<<<<< HEAD
+        'SELECT * FROM packages WHERE package_name = ? AND package_version = ?',
+        ['TestPackage1', '1.0.0']
+      );
+    });
+=======
         'SELECT * FROM packages WHERE package_name = ? AND package_Version = ?',
         ['TestPackage1', '1.0.0']
       );
@@ -249,4 +292,5 @@ jest.mock('../routes/db', () => {
         ['TestPackage1', '1.0.0', '2.0.0']
       );
     });
+>>>>>>> main
   });
