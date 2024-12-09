@@ -37,7 +37,6 @@ export const packageRateHandler = async (packageId: string) => {
 
     const query = 'SELECT * FROM packages WHERE id = ?';
     const result = await db_connection.execute(query, [packageId]);
-    console.log(result);
 
     if (result[0].length === 0) {
       return {
