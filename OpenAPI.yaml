@@ -1,0 +1,185 @@
+openapi: 3.1.2
+info:
+  title: ECE 461 - Fall 2024 - Project Phase 2
+  version: 2.0.0
+  description: |-
+    API for ECE 461/Fall 2024/Project Phase 2: A Trustworthy Module Registry
+
+    This spec ONLY covers endpoints that will be targeted by the autograder, and thus expect a consistent format.
+
+    This means that just the baseline requirements are covered by this spec, along with /recommend for the ML track.
+  termsOfService: http://swagger.io/terms/
+  contact:
+    name: Calvin Madsen
+    email: cfmadsen@purdue.edu
+  license:
+    name: LGPL 2.1
+    url: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html
+paths:
+  /packages:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+          description: List of packages
+        "400":
+          description: "There is missing field(s) in the PackageQuery or it is formed improperly, or is invalid."
+        "413":
+          description: Too many packages returned.
+      summary: Get the packages from the registry. (BASELINE)
+      description: |-
+        Get any packages fitting the query.
+        Search for packages satisfying the indicated query.
+
+        If you want to enumerate all packages, provide an array with a single PackageQuery whose name is "*".
+  /reset:
+    delete:
+      responses:
+        "200":
+          description: Registry is reset.
+        "401":
+          description: You do not have permission to reset the registry.
+      summary: Reset the registry. (BASELINE)
+      description: Reset the registry to a system default state.
+  /package/{id}:
+    get:
+      parameters:
+      - name: id
+        description: ID of package to fetch
+        in: path
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Return the package. Content is required.
+        "400":
+          description: "There is missing field(s) in the PackageID or it is formed improperly, or is invalid."
+        "404":
+          description: Package does not exist.
+      summary: Interact with the package with this ID. (BASELINE)
+      description: Return this package.
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      parameters:
+      - name: id
+        in: path
+        required: true
+      responses:
+        "200":
+          description: Version is updated.
+        "400":
+          description: "There is missing field(s) in the PackageID or it is formed improperly, or is invalid."
+        "404":
+          description: Package does not exist.
+      summary: Update this content of the package. (BASELINE)
+      description: |-
+        This endpoint is used to create a new version for an existing package.
+
+        You will receive the package contents similarly to the /package endpoint, along with a new version ID. First, check if the new version ID is more recent than the latest version. Note that the provided package ID may refer to an older version of the package; in this case, you should append the new package version after the latest version.
+  /package:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Success. Check the ID in the returned metadata for the official ID.
+        "400":
+          description: There is missing field(s) in the PackageData or it is formed improperly.
+        "409":
+          description: Package exists already.
+      summary: Upload or Ingest a new package. (BASELINE)
+      description: |-
+        Upload or Ingest a new package. Packages that are uploaded may have the same name but a new version. Refer to the description above to see how an id is formed for a package.
+  /package/byRegEx:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+          description: Return a list of packages.
+        "400":
+          description: There is missing field(s) in the PackageRegEx or it is formed improperly, or is invalid
+        "404":
+          description: No package found under this regex.
+      summary: Get any packages fitting the regular expression (BASELINE).
+      description: Search for a package using regular expression over package names and READMEs. This is similar to search by name.
+  /tracks:
+    get:
+      summary: "Get the list of tracks a student has planned to implement in their code"
+      responses:
+        "200":
+          description: Return the list of tracks the student plans to implement
+          content:
+            application/json:
+              schema:
+                type: object
+  /recommend:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  description: Description of the software project for recommendation
+          required: true
+      responses:
+        "201":
+          description: Recommendations successfully generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      description:
+                        type: string
+                        description: The input project description
+                      prompt:
+                        type: string
+                        description: The prompt sent to the recommendation engine
+                      recommendations:
+                        type: string
+                        description: A newline-separated list of recommended packages
+        "400":
+          description: Description is required and must be a string.
+        "500":
+          description: An error occurred while fetching recommendations.
+      summary: Generate recommendations for open-source NPM packages.
+      description: Provide a description of a software project to get the top-5 recommended open-source NPM packages.
