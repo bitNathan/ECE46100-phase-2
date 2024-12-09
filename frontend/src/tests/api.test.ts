@@ -28,14 +28,14 @@ describe('API Service Tests', () => {
   });
 
   test('fetchPackageVersion sends correct payload', async () => {
-    const mockPayload = { packageId: '123', version: '1.0.0' };
+    const mockPayload = { Name: '123', Version: '1.0.0' }; // Updated payload format
     mockedAxios.post.mockResolvedValueOnce({ data: mockResponseData });
-
-    const result = await api.fetchPackageVersion(mockPayload.packageId, mockPayload.version);
-
+  
+    const result = await api.fetchPackageVersion(mockPayload.Name, mockPayload.Version);
+  
     expect(mockedAxios.post).toHaveBeenCalledWith(
       'http://localhost:3000/packages',
-      mockPayload
+      [mockPayload] // Correct format: array with Name and Version object
     );
     expect(result).toEqual(mockResponseData);
   });

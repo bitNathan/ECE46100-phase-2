@@ -21,27 +21,24 @@ export const getPackages = async (offset: number) => {
   }
 };
 
-export const fetchPackageVersion = async (packageId: string, version: string) => {
+export const fetchPackageVersion = async (Name: string, Version: string) => {
   try {
-    const requestData: any = {
-      packageId,
-      version,
-    };
+    // The route expects an array with an object containing "Name" and "Version"
+    const requestData = [{ Name, Version }];
 
     const response = await axios.post(`${API_BASE_URL}/packages`, requestData);
     return response.data;
   } catch (error) {
+    // Handle errors as before
     if (axios.isAxiosError(error)) {
       const statusCode = error.response?.status;
       const errorMessage = error.response?.data?.message || 'An unknown error occurred';
-
       alert(`Error: ${errorMessage} (Status Code: ${statusCode})`);
-
     } else {
       console.error('Error: Failed to connect to the server.');
     }
   }
-}
+};
 
 export const uploadPackage = async (
   name: string,
