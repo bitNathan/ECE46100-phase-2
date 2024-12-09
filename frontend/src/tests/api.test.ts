@@ -16,13 +16,13 @@ describe('API Service Tests', () => {
 
   test('getPackages calls API with correct parameters', async () => {
     mockedAxios.post.mockResolvedValueOnce({ data: mockResponseData });
-
+  
     const result = await api.getPackages(1);
-
+  
     expect(mockedAxios.post).toHaveBeenCalledWith(
       'http://localhost:3000/packages',
-      null,
-      { params: { offset: 1 } }
+      [{"Name": "*", "Version": "*"}], // Correct payload
+      { params: { offset: 1 } } // Correct params
     );
     expect(result).toEqual(mockResponseData);
   });
