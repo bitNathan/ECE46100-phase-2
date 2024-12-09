@@ -6,4 +6,7 @@ dist
 coverage
 *.pem
 *.log
+<<<<<<< HEAD
 *.logs
+=======
+>>>>>>> main

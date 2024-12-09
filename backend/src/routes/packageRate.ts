@@ -1,13 +1,13 @@
 import express, { Request, Response } from 'express';
 import { Router } from 'express';
 import dbConnectionPromise from './db';
-import { getBusFactor } from '../bus_factor';
-import { getCorrectness } from '../correctness';
-import { calculateTotalTimeFromRepo } from '../ramp_up_metric';
-import { getResponsive } from '../responsive_maintainer';
-import { getLicense } from '../license';
+import { getBusFactor } from '../metrics/bus_factor';
+import { getCorrectness } from '../metrics/correctness';
+import { calculateTotalTimeFromRepo } from '../metrics/ramp_up_metric';
+import { getResponsive } from '../metrics/responsive_maintainer';
+import { getLicense } from '../metrics/license';
 import { getDependencies } from '../dependency_parser';
-import { getPullRequestCodeReview } from '../pull_request_code_review';
+import { getPullRequestCodeReview } from '../metrics/pull_request_code_review';
 import { parseURL } from '../url_parse';
 
 const router: Router = express.Router();

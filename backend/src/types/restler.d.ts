@@ -1,19 +1,29 @@
+// restler.d.ts
 declare module 'restler' {
-    interface RestlerResponse {
+    export interface RestlerResponse {
         statusCode: number;
-        headers: Record<string, string>;
+        headers: { [key: string]: string };
     }
 
     interface RestlerRequest {
         on(event: 'success', callback: (data: any, response: RestlerResponse) => void): this;
         on(event: 'fail', callback: (data: any, response: RestlerResponse) => void): this;
         on(event: 'error', callback: (err: Error) => void): this;
+        on(event: 'timeout', callback: () => void): this;
         on(event: 'complete', callback: (data: any, response: RestlerResponse) => void): this;
     }
 
-    function put(url: string, options?: any): RestlerRequest;
-    function post(url: string, options?: any): RestlerRequest;
-    function get(url: string, options?: any): RestlerRequest;
-    function del(url: string, options?: any): RestlerRequest;
-    function del(url: string, options?: any): RestlerRequest;
+    export function put(url: string, options?: {
+        data?: any;
+        headers?: { [key: string]: string };
+    }): RestlerRequest;
+
+    export function post(url: string, options?: {
+        data?: any;
+        headers?: { [key: string]: string };
+    }): RestlerRequest;
+
+    export function del(url: string, options?: {
+        headers?: { [key: string]: string };
+    }): RestlerRequest;
 }

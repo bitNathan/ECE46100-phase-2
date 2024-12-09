@@ -1,6 +1,6 @@
 import { graphqlRequest } from '../graphql_request';
 import logger from '../logger';
-import { getCorrectness } from '../correctness'; 
+import { getCorrectness } from '../metrics/correctness'; 
 
 // 3 test cases
 

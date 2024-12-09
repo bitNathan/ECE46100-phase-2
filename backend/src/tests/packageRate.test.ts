@@ -9,27 +9,27 @@ jest.mock('../routes/db', () => ({
 }));
 
 // Mock all dependency functions
-jest.mock('../bus_factor', () => ({
+jest.mock('../metrics/bus_factor', () => ({
   getBusFactor: jest.fn().mockResolvedValue([0.8, 0.1])
 }));
 
-jest.mock('../correctness', () => ({
+jest.mock('../metrics/correctness', () => ({
   getCorrectness: jest.fn().mockResolvedValue([0.9, 0.1])
 }));
 
-jest.mock('../ramp_up_metric', () => ({
+jest.mock('../metrics/ramp_up_metric', () => ({
   calculateTotalTimeFromRepo: jest.fn().mockResolvedValue([0.7, 0.1])
 }));
 
-jest.mock('../responsive_maintainer', () => ({
+jest.mock('../metrics/responsive_maintainer', () => ({
   getResponsive: jest.fn().mockResolvedValue([0.85, 0.1])
 }));
 
-jest.mock('../license', () => ({
+jest.mock('../metrics/license', () => ({
   getLicense: jest.fn().mockResolvedValue([1.0, 0.1])
 }));
 
-jest.mock('../pull_request_code_review', () => ({
+jest.mock('../metrics/pull_request_code_review', () => ({
   getPullRequestCodeReview: jest.fn().mockResolvedValue([0.75, 0.1])
 }));
 
@@ -114,7 +114,7 @@ describe('packageRateHandler', () => {
     mockDb.execute.mockResolvedValueOnce([[mockPackage]]);
 
     // Mock bus factor calculation to fail
-    const busFactorMock = require('../bus_factor').getBusFactor;
+    const busFactorMock = require('../metrics/bus_factor').getBusFactor;
     busFactorMock.mockRejectedValueOnce(new Error('Rating calculation failed'));
 
     const response = await packageRateHandler('123');

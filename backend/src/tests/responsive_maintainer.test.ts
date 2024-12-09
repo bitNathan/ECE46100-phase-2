@@ -1,6 +1,6 @@
 import { graphqlRequest } from '../graphql_request';
 import logger from '../logger';
-import { getResponsive } from '../responsive_maintainer';
+import { getResponsive } from '../metrics/responsive_maintainer';
 
 // 5 test cases
 

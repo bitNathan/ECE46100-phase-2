@@ -18,17 +18,11 @@ router.delete('/reset', async (req, res) => {
 
     const [rows] = await db_connection.execute('SELECT * FROM packages');
 
-    // Check if there are any packages
-    if (!rows.length) {
-      res.status(200).json({message: 'Registry already empty'});
-      return;
-    }
-
     // Reset the registry to the default state
     await db_connection.execute('DELETE FROM packages');
 
     // return pageSize packages
-    res.status(200).json({ message: 'Registry successfully reset to default state' });
+    res.status(200).json({ message: 'Registry is reset' });
     return;
   } catch (error) {
     console.error('Error resetting registry:', error);

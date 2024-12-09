@@ -1,20 +1,17 @@
 import { PackageIngestionService } from '../routes/packageIngestionServices';
 import axios from 'axios';
-import MockAdapter from 'axios-mock-adapter';
+
+jest.mock('axios');
+const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('PackageIngestionService', () => {
     let packageIngestionService: PackageIngestionService;
-    let mockAxios: MockAdapter;
     const apiBaseUrl = 'http://test-api.com';
     const authToken = 'test-token';
 
     beforeEach(() => {
-        mockAxios = new MockAdapter(axios);
         packageIngestionService = new PackageIngestionService(apiBaseUrl, authToken);
-    });
-
-    afterEach(() => {
-        mockAxios.restore();
+        jest.clearAllMocks();
     });
 
     describe('ingestPackage', () => {
@@ -56,82 +53,92 @@ describe('PackageIngestionService', () => {
 
         it('should successfully ingest a package with valid metrics', async () => {
             // Mock temporary package creation
-            mockAxios.onPost(`${apiBaseUrl}/package`).replyOnce(201, testPackage);
+            mockedAxios.post.mockResolvedValueOnce({ data: testPackage, status: 201 });
             
             // Mock metrics retrieval
-            mockAxios.onGet(`${apiBaseUrl}/package/test-id/rate`)
-                .replyOnce(200, validMetrics);
+            mockedAxios.get.mockResolvedValueOnce({ data: validMetrics, status: 200 });
             
             // Mock final package upload
-            mockAxios.onPost(`${apiBaseUrl}/package`).replyOnce(201, testPackage);
+            mockedAxios.post.mockResolvedValueOnce({ data: testPackage, status: 201 });
 
             const result = await packageIngestionService.ingestPackage({
                 URL: 'https://github.com/test/repo'
             });
 
             expect(result).toBe(true);
+            expect(mockedAxios.post).toHaveBeenCalledTimes(2);
+            expect(mockedAxios.get).toHaveBeenCalledTimes(1);
         });
 
         it('should reject package with invalid metrics', async () => {
             // Mock temporary package creation
-            mockAxios.onPost(`${apiBaseUrl}/package`).replyOnce(201, testPackage);
+            mockedAxios.post.mockResolvedValueOnce({ data: testPackage, status: 201 });
             
             // Mock metrics retrieval with invalid metrics
-            mockAxios.onGet(`${apiBaseUrl}/package/test-id/rate`)
-                .replyOnce(200, invalidMetrics);
+            mockedAxios.get.mockResolvedValueOnce({ data: invalidMetrics, status: 200 });
 
             const result = await packageIngestionService.ingestPackage({
                 URL: 'https://github.com/test/repo'
             });
 
             expect(result).toBe(false);
+            expect(mockedAxios.post).toHaveBeenCalledTimes(1);
         });
 
         it('should handle API errors gracefully', async () => {
             // Mock API error
-            mockAxios.onPost(`${apiBaseUrl}/package`).networkError();
+            mockedAxios.post.mockRejectedValueOnce(new Error('Network error'));
 
             const result = await packageIngestionService.ingestPackage({
                 URL: 'https://github.com/test/repo'
             });
 
             expect(result).toBe(false);
+            expect(mockedAxios.post).toHaveBeenCalledTimes(1);
         });
 
         it('should handle missing metrics', async () => {
             // Mock temporary package creation
-            mockAxios.onPost(`${apiBaseUrl}/package`).replyOnce(201, testPackage);
+            mockedAxios.post.mockResolvedValueOnce({ data: testPackage, status: 201 });
             
             // Mock metrics retrieval with missing metric
-            mockAxios.onGet(`${apiBaseUrl}/package/test-id/rate`)
-                .replyOnce(200, {
+            mockedAxios.get.mockResolvedValueOnce({ 
+                data: {
                     ...validMetrics,
                     BusFactor: undefined
-                });
+                }, 
+                status: 200 
+            });
 
             const result = await packageIngestionService.ingestPackage({
                 URL: 'https://github.com/test/repo'
             });
 
             expect(result).toBe(false);
+            expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+            expect(mockedAxios.get).toHaveBeenCalledTimes(1);
         });
 
         it('should handle invalid metric values (-1)', async () => {
             // Mock temporary package creation
-            mockAxios.onPost(`${apiBaseUrl}/package`).replyOnce(201, testPackage);
+            mockedAxios.post.mockResolvedValueOnce({ data: testPackage, status: 201 });
             
             // Mock metrics retrieval with invalid metric value
-            mockAxios.onGet(`${apiBaseUrl}/package/test-id/rate`)
-                .replyOnce(200, {
+            mockedAxios.get.mockResolvedValueOnce({ 
+                data: {
                     ...validMetrics,
                     BusFactor: -1
-                });
+                }, 
+                status: 200 
+            });
 
             const result = await packageIngestionService.ingestPackage({
                 URL: 'https://github.com/test/repo'
             });
 
             expect(result).toBe(false);
+            expect(mockedAxios.post).toHaveBeenCalledTimes(1);
+            expect(mockedAxios.get).toHaveBeenCalledTimes(1);
         });
     });
 });
