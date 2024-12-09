@@ -76,9 +76,8 @@ jest.mock('../routes/db', () => {
       const response = await request(app)
         .post(`/packages`)
         .send([{ Name: '*', Version: '*' }])
-        .expect(404);
+        .expect(200);
   
-      expect(response.body).toHaveProperty('message', 'No packages found');
   
       // Check that db execute was called with correct query
       expect(executeMock).toHaveBeenCalledWith('SELECT * FROM packages WHERE package_name IS NOT NULL AND package_Version IS NOT NULL', []);

@@ -84,7 +84,7 @@ router.post('/packages', async (req, res) => {
 
     // Check if there are any packages
     if (!paginatedRows.length) {
-      res.status(404).json({message: 'No packages found'});
+      res.status(200).json([]);
       return;
     }
 
