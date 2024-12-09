@@ -38,7 +38,7 @@ const App: React.FC = () => {
         <div onClick={() => setActiveTab('UpdatePackage')} style={{ padding: '10px', borderBottom: activeTab === 'UpdatePackage' ? '2px solid blue' : 'none' }}>Update Package</div>
         <div onClick={() => setActiveTab('PackageRate')} style={{ padding: '10px', borderBottom: activeTab === 'PackageRate' ? '2px solid blue' : 'none' }}>Package Rating</div>
         <div onClick={() => setActiveTab('PackageCost')} style={{ padding: '10px', borderBottom: activeTab === 'PackageCost' ? '2px solid blue' : 'none' }}>Package Cost</div>
-        <div onClick={handleReset} style={{ padding: '10px', color: 'red', cursor: 'pointer' }}>Reset Registry</div>
+        <div onClick={handleReset} style={{ padding: '10px', color: '#e50000', cursor: 'pointer' }}>Reset Registry</div>
       </div>
       <div style={{ marginTop: '20px' }}>
         {activeTab === 'UploadPackage' && <UploadPackage />}
