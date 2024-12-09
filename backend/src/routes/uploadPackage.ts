@@ -7,6 +7,7 @@ import axios from 'axios';
 import dbConnectionPromise from './db';
 import isBase64 from 'is-base64';
 import AdmZip from 'adm-zip';
+import { parseURL } from '../url_parse';
 
 const router = express.Router();
 
@@ -46,8 +47,12 @@ router.post('/package', async (req, res) => {
       res.status(500).json({ message: 'Database connection failed' });
       return;
     }
+   
+    let owner = '';
+    let repo = '';
 
     if (Content) {
+
       // Validate Base64 Content
       if (!isBase64(Content, { allowEmpty: false })) {
         res.status(400).json({ message: 'Invalid Base64 Content' });
@@ -77,17 +82,72 @@ router.post('/package', async (req, res) => {
         if (readmeEntry) {
           readmeContent = readmeEntry.getData().toString('utf-8'); // Extract README content
         } else {
-          console.warn('No README.md, Readme.md, or readme.md file found in the uploaded content');
+          //console.warn('No README.md, Readme.md, or readme.md file found in the uploaded content');
         }
       } catch (error) {
-        console.warn('Error reading README.md from content:', error);
+        //console.warn('Cannot read README.md from content:', error);
       }
+
+      // get owner repo from content
+      try {
+
+        // Initialize zip handler
+        const zip = new AdmZip(packageBuffer);
+
+        // Search for package.json in the zip file
+        const zipEntries = zip.getEntries();
+        let packageJsonContent = null;
+
+        zipEntries.forEach((entry) => {
+          if (entry.entryName.endsWith('package.json')) {
+            packageJsonContent = entry.getData().toString('utf8');
+          }
+        });        
+
+        if (!packageJsonContent) {
+          throw new Error("package.json not found in the uploaded content.");
+        }
+
+        // Parse the package.json content
+        const packageJson = JSON.parse(packageJsonContent);
+
+        // Extract the repository field
+        const repository = packageJson.repository;
+
+        // Handle different formats of the repository field
+        let url = null;
+        if (typeof repository === 'string') {
+          // Direct string format like "bendrucker/smallest"
+          url = `https://github.com/${repository}`;
+        } else if (typeof repository === 'object' && repository.url) {
+          // Object format with a URL field
+          url = repository.url;
+        }
+
+        if (!url) {
+          console.error('Error extracting package.json:');
+          res.status(400).json({ message: 'Error fetching URL from Package' });
+          return;
+        }
+
+        // Parse the URL (if needed to get specific parts like owner and repo)
+        [owner, repo] = await parseURL(url);
+
+      } catch (error) {
+        console.error('Error extracting package.json:', error);
+        res.status(400).json({ message: 'Error fetching URL from Package' });
+        return;
+      }
+
     } else if (URL) {
       // Fetch package from URL
       try {
         // Fetch the package buffer
         const resolvedURL = await resolveURL(URL);
-        const {owner, repo} = await getOwnerAndRepoFromURL(resolvedURL);
+        const ownerRepo = await getOwnerAndRepoFromURL(resolvedURL);
+        owner = ownerRepo.owner;
+        repo = ownerRepo.repo;
+        console.log(owner, repo);
 
         const repoInfoUrl = `https://api.github.com/repos/${owner}/${repo}`;
         const repoInfoResponse = await axios.get(repoInfoUrl);
@@ -163,12 +223,16 @@ router.post('/package', async (req, res) => {
     }
 
     // Rate the package
-    const rating = await ratePackage(packageBuffer);
-    if (rating < 0.5) {
-      res.status(424).json({
-        message: 'Package is not uploaded due to the disqualified rating.',
-      });
-      return;
+    console.log('Rating package:', owner, repo);
+    const ratings: number[] = await ratePackage(owner, repo);
+    console.log('Ratings:', ratings);
+    for (const rating of ratings) {
+      if (rating < 0.5) {
+        res.status(424).json({
+          message: 'Package is not uploaded due to the disqualified rating.',
+        });
+        return;
+      }
     }
 
     // Generate ID

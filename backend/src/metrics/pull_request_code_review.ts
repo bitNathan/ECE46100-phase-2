@@ -1,8 +1,7 @@
-//pull_request_code_review.ts
 import axios from 'axios';
 import logger from '../logger';
 
-// Function to get pull request data
+// Function to get fraction of project code introduced via PRs that underwent code review
 export async function getPullRequestCodeReview(owner: string, repo: string): Promise<number[]> {
     const start = Date.now();
     const apiUrl = `https://api.github.com/repos/${owner}/${repo}/pulls?state=all`;
@@ -12,27 +11,31 @@ export async function getPullRequestCodeReview(owner: string, repo: string): Pro
         const response = await axios.get(apiUrl);
         const pullRequests = response.data;
 
-        const totalCodeChanges = pullRequests.reduce(
+        // Consider only merged PRs, as only these have introduced code into the repository
+        const mergedPullRequests = pullRequests.filter((pr: any) => pr.merged_at);
+
+        const totalCodeChanges = mergedPullRequests.reduce(
             (acc: number, pr: any) => acc + (pr.changed_files || 0),
             0
         );
 
-        const reviewedCodeChanges = pullRequests.reduce(
+        // Calculate the portion of code from PRs that received review comments
+        const reviewedCodeChanges = mergedPullRequests.reduce(
             (acc: number, pr: any) => acc + ((pr.review_comments && pr.review_comments > 0) ? pr.changed_files : 0),
             0
         );
 
+        // If no code changes are introduced, avoid division by zero
         if (totalCodeChanges === 0) {
-            return [0, (Date.now() - start) / 1000];  // Avoid division by zero if no changes at all
+            return [0, (Date.now() - start) / 1000];
         }
 
-        // Return the fraction of reviewed changes
         const fractionReviewed = reviewedCodeChanges / totalCodeChanges;
-        logger.debug(`Reviewed Code Changes: ${reviewedCodeChanges}, Total Code Changes: ${totalCodeChanges}`);
-        return [fractionReviewed, (Date.now() - start) / 1000];
+        logger.debug(`Reviewed Code Changes: ${reviewedCodeChanges}, Total Code Changes: ${totalCodeChanges}, Fraction Reviewed: ${fractionReviewed}`);
 
+        return [fractionReviewed, (Date.now() - start) / 1000];
     } catch (error) {
         logger.error(`Error occurred while fetching pull requests: ${error instanceof Error ? error.message : 'Unknown error'}`);
-        return [0, (Date.now() - start) / 1000];  // Default value in case of error
+        return [0, (Date.now() - start) / 1000];  
     }
 }
