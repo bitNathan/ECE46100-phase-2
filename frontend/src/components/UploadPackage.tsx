@@ -53,6 +53,7 @@ const UploadPackage: React.FC = () => {
         type="file"
         onChange={handleFileChange}
         disabled={!!url}
+        title='Choose a file'
       />
       <input
         type="text"
@@ -70,6 +71,7 @@ const UploadPackage: React.FC = () => {
         placeholder="JSProgram"
         value={jsProgram}
         onChange={(e) => setJsProgram(e.target.value)}
+        aria-describedby="program-input-description"
       />
       <label>
         Debloat:
