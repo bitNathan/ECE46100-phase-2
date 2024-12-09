@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ratePackage } from '../services/api'; // Import the function from api.ts
 
 interface RatingResponse {
   RampUp: number;
@@ -35,14 +36,12 @@ const PackageRate: React.FC = () => {
 
     try {
       console.log('Requesting rating for package:', packageId);
-      const response = await fetch(`/api/package/${packageId}/rate`);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Error: ${response.status}`);
+      const data = await ratePackage(packageId);
+
+      if (!data) {
+        throw new Error('Failed to fetch package rating.');
       }
 
-      const data = await response.json();
       console.log('Received rating:', data);
       setRating(data);
     } catch (err) {

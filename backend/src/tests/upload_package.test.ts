@@ -34,11 +34,19 @@ jest.mock('../routes/db', () => ({
   }),
 }));
 
+<<<<<<< HEAD
+=======
+jest.mock('../url_parse', () => ({
+  parseURL: jest.fn(),
+}));
+
+>>>>>>> main
 describe('POST /package', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
+<<<<<<< HEAD
   test('should upload a package with Content and Name successfully', async () => {
     const packageBuffer = Buffer.from('fake package data');
     const base64Content = packageBuffer.toString('base64');
@@ -223,6 +231,8 @@ describe('POST /package', () => {
     );
   });
 
+=======
+>>>>>>> main
   test('should return 400 when both Content and URL are provided', async () => {
     const response = await request(app)
       .post('/package')
@@ -233,7 +243,11 @@ describe('POST /package', () => {
       })
       .expect(400);
 
+<<<<<<< HEAD
     expect(response.body).toHaveProperty('message', 'Either Content or URL must be provided, but not both');
+=======
+    expect(response.body.message).toBe('Either Content or URL must be provided, but not both');
+>>>>>>> main
   });
 
   test('should return 400 when neither Content nor URL are provided', async () => {
@@ -244,6 +258,7 @@ describe('POST /package', () => {
       })
       .expect(400);
 
+<<<<<<< HEAD
     expect(response.body).toHaveProperty('message', 'Either Content or URL must be provided, but not both');
   });
 
@@ -259,12 +274,65 @@ describe('POST /package', () => {
   });
 
   test('should return 400 when Content is invalid Base64', async () => {
+=======
+    expect(response.body.message).toBe('Either Content or URL must be provided, but not both');
+  });
+
+  test('should handle package with URL and fetch README', async () => {
+    const packageBuffer = Buffer.from('fake package data');
+    const base64Content = packageBuffer.toString('base64');
+    const packageName = 'TestPackage';
+    const packageVersion = '1.0.0';
+    const packageID = 'testpackage-1.0.0';
+    const packageURL = 'https://github.com/testuser/testrepo';
+  
+    const resolveURLMock = require('../utils/handleURL').resolveURL as jest.Mock;
+    resolveURLMock.mockResolvedValue(packageURL);
+  
+    const getOwnerAndRepoFromURLMock = require('../utils/handleURL').getOwnerAndRepoFromURL as jest.Mock;
+    getOwnerAndRepoFromURLMock.mockResolvedValue({ owner: 'testuser', repo: 'testrepo' });
+  
+    const parseURLMock = require('../url_parse').parseURL as jest.Mock;
+    parseURLMock.mockResolvedValue(['testuser', 'testrepo']);
+  
+    mockedAxios.get.mockImplementation((url: string) => {
+      if (url.includes('/archive/')) {
+        return Promise.resolve({ data: packageBuffer });
+      } else if (url.includes('/README.md')) {
+        return Promise.resolve({ data: 'This is the README.md content' });
+      } else if (url.includes('/repos/')) {
+        return Promise.resolve({ data: { default_branch: 'main' } });
+      }
+      return Promise.reject(new Error('URL not recognized'));
+    });
+  
+    const generateIDMock = require('../utils/generateID').generateID as jest.Mock;
+    generateIDMock.mockReturnValue(packageID);
+  
+    executeMock.mockResolvedValueOnce([[]]);
+    executeMock.mockResolvedValueOnce([{ affectedRows: 1 }]);
+  
+    const response = await request(app)
+      .post('/package')
+      .send({
+        URL: packageURL,
+        debloat: false,
+      })
+
+  
+    expect(response).toBeDefined()
+  
+  });
+
+  test('should handle invalid Base64 content', async () => {
+>>>>>>> main
     const response = await request(app)
       .post('/package')
       .send({
         Name: 'TestPackage',
         Content: 'invalidBase64Content$$$',
       })
+<<<<<<< HEAD
       .expect(400);
 
     expect(response.body).toHaveProperty('message', 'Invalid Base64 Content');
@@ -406,4 +474,52 @@ describe('POST /package', () => {
 
     expect(response.body).toHaveProperty('message', 'Server error during upload');
   });
+=======
+
+    expect(response.body.message).toBeDefined();
+  });
+
+  test('should return 409 when package already exists', async () => {
+    const packageID = 'testpackage-1.0.0';
+  
+    const generateIDMock = require('../utils/generateID').generateID as jest.Mock;
+    generateIDMock.mockReturnValue(packageID);
+  
+    executeMock.mockResolvedValueOnce([[{ id: packageID }]]); // Package exists
+  
+    const response = await request(app)
+      .post('/package')
+      .send({
+        Name: 'TestPackage',
+        Version: '1.0.0',
+        Content: Buffer.from('fake package data').toString('base64'),
+        debloat: false,
+      })
+  
+    expect(response.body.message).toBeDefined();
+  });
+  
+
+  test('should return 424 when package rating is below threshold', async () => {
+    const packageID = 'testpackage-1.0.0';
+  
+    const generateIDMock = require('../utils/generateID').generateID as jest.Mock;
+    generateIDMock.mockReturnValue(packageID);
+  
+    const ratePackageMock = require('../utils/ratePackage').ratePackage as jest.Mock;
+    ratePackageMock.mockResolvedValue([0.4]); // Below threshold
+  
+    const response = await request(app)
+      .post('/package')
+      .send({
+        Name: 'TestPackage',
+        Version: '1.0.0',
+        Content: Buffer.from('fake package data').toString('base64'),
+        debloat: false,
+      })
+  
+    expect(response.body.message).toBeDefined();
+  });
+  
+>>>>>>> main
 });

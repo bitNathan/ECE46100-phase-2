@@ -8,7 +8,10 @@ const API_BASE_URL = 'http://localhost:3000';
 
 export const getPackages = async (offset: number) => {
   try {
-    const response = await axios.post(`${API_BASE_URL}/packages`, null, {
+    const response = await axios.post(`${API_BASE_URL}/packages`, [{
+      Name: "*",
+      Version: "*"
+    }], {
       params: { offset },
     });
     return response.data;
@@ -165,26 +168,18 @@ export const ratePackage = async (packageId: string) => {
 
 export const resetRegistry = async () => {
   try {
-    await axios.post(`${API_BASE_URL}/reset`);
+    await axios.delete(`${API_BASE_URL}/reset`);
     alert('Registry has been reset successfully.');
   } catch (error) {
     console.error('Error resetting registry:', error);
   }
 };
 
-export const getPackageById = async (packageId: string) => {
+export const getPackageCost = async (packageId: string, includeDependencies: boolean) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/package/${packageId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching package by ID:', error);
-    return null;
-  }
-};
-
-export const getPackageCost = async (packageId: string) => {
-  try {
-    const response = await axios.get(`${API_BASE_URL}/package/${packageId}/cost`);
+    // Append the dependency query parameter if needed
+    const url = `${API_BASE_URL}/package/${packageId}/cost${includeDependencies ? '?dependency=true' : ''}`;
+    const response = await axios.get(url);
     return response.data;
   } catch (error) {
     console.error('Error fetching package cost:', error);

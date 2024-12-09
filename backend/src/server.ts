@@ -4,10 +4,16 @@ import resetRouter from './routes/reset';
 import uploadPackageRouter from './routes/uploadPackage';
 import downloadPackageRouter from './routes/downloadPackage';
 import searchPackagesRouter from './routes/search_packages';
+<<<<<<< HEAD
+=======
+import ratePackageRouter from './routes/packageRate';
+import packageCostRouter from './routes/packageCost';
+>>>>>>> main
 import recommendRouter from './routes/recommend';
 import updatePackageRouter from './routes/updatePackage';
 import tracksRouter from './routes/tracks';
 import cors from 'cors';
+
 const app = express();
 
 require('dotenv').config();
@@ -26,6 +32,11 @@ app.use('/', packagesRouter);
 app.use('/', resetRouter);
 app.use('/', recommendRouter);
 app.use('/', updatePackageRouter);
+<<<<<<< HEAD
+=======
+app.use('/', ratePackageRouter);
+app.use('/', packageCostRouter);
+>>>>>>> main
 app.use('/', tracksRouter);
 
 app.use((err: any, req: any, res: any, next: express.NextFunction) => {
@@ -43,4 +54,8 @@ if (require.main === module) { // due to testing
   });
 }
 
+<<<<<<< HEAD
 export default app; // for testing
+=======
+export default app; // for testing
+>>>>>>> main

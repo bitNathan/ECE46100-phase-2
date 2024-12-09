@@ -1,4 +1,4 @@
-import { getDependencies } from './dependency_parser';
+import { getDependencies } from '../dependency_parser';
 
 export const calculateDependencyPinning = async (owner: string, repo: string): Promise<[number, number]> => {
   const start = Date.now();

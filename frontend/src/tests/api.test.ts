@@ -7,21 +7,22 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 
 describe('API Service Tests', () => {
   const mockResponseData = { data: 'mocked data' };
-  
+
   beforeEach(() => {
     mockedAxios.post.mockClear();
     mockedAxios.get.mockClear();
+    mockedAxios.delete.mockClear();
   });
 
   test('getPackages calls API with correct parameters', async () => {
     mockedAxios.post.mockResolvedValueOnce({ data: mockResponseData });
-
+  
     const result = await api.getPackages(1);
-
+  
     expect(mockedAxios.post).toHaveBeenCalledWith(
       'http://localhost:3000/packages',
-      null,
-      { params: { offset: 1 } }
+      [{"Name": "*", "Version": "*"}], // Correct payload
+      { params: { offset: 1 } } // Correct params
     );
     expect(result).toEqual(mockResponseData);
   });
@@ -143,10 +144,10 @@ describe('API Service Tests', () => {
   });
 
   test('resetRegistry calls reset endpoint', async () => {
-    mockedAxios.post.mockResolvedValueOnce({});
+    mockedAxios.delete.mockResolvedValueOnce({}); // Use delete here
 
     await api.resetRegistry();
 
-    expect(mockedAxios.post).toHaveBeenCalledWith('http://localhost:3000/reset');
+    expect(mockedAxios.delete).toHaveBeenCalledWith('http://localhost:3000/reset'); // Updated to mockedAxios.delete
   });
 });

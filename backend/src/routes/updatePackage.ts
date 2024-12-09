@@ -8,6 +8,7 @@ import { getOwnerAndRepoFromURL, resolveURL } from '../utils/handleURL';
 import { generateID } from '../utils/generateID';
 import isBase64 from 'is-base64';
 import AdmZip from 'adm-zip';
+import { parseURL } from '../url_parse';
 
 const router = express.Router();
 
@@ -173,7 +174,8 @@ router.post('/package/:id', async (req, res) => {
     // Now fetch the actual package buffer from Content or URL
     let packageBuffer: Buffer | null = null;
     let readmeContent: string | null = null;
-
+    let owner = '';
+    let repo = '';
     if (isUpdateFromContent) {
       // Validate Base64 Content
       if (!isBase64(Content, { allowEmpty: false })) {
@@ -192,23 +194,81 @@ router.post('/package/:id', async (req, res) => {
       // Extract README file content
       try {
         const zip = new AdmZip(packageBuffer); // Initialize zip handler
-        const readmeEntry = zip.getEntries().find((entry) => 
-          entry.entryName.toLowerCase().endsWith('readme.md') // Look for README files
-        );
-    
+
+        // List of possible README file names to check
+        const readmeCandidates = ['README.md', 'Readme.md', 'readme.md', 'readme.txt', 'README.txt', 'Readme.txt', 'README', 'Readme', 'readme'];
+        const readmeEntry = readmeCandidates
+          .map((candidate) =>
+            zip.getEntries().find((entry) => entry.entryName.endsWith(candidate))
+          )
+          .find((entry) => entry); // Stop at the first match
+
         if (readmeEntry) {
           readmeContent = readmeEntry.getData().toString('utf-8'); // Extract README content
         } else {
-          console.warn('No README.md file found in the uploaded content');
+          //console.warn('No README.md, Readme.md, or readme.md file found in the uploaded content');
         }
       } catch (error) {
-        console.warn('Error reading README.md from content:', error);
+        //console.warn('Error reading README.md from content:', error);
+      }
+      // get owner repo from content
+      try {
+
+        // Initialize zip handler
+        const zip = new AdmZip(packageBuffer);
+
+        // Search for package.json in the zip file
+        const zipEntries = zip.getEntries();
+        let packageJsonContent = null;
+
+        zipEntries.forEach((entry) => {
+          if (entry.entryName.endsWith('package.json')) {
+            packageJsonContent = entry.getData().toString('utf8');
+          }
+        });        
+
+        if (!packageJsonContent) {
+          throw new Error("package.json not found in the uploaded content.");
+        }
+
+        // Parse the package.json content
+        const packageJson = JSON.parse(packageJsonContent);
+
+        // Extract the repository field
+        const repository = packageJson.repository;
+
+        // Handle different formats of the repository field
+        let url = null;
+        if (typeof repository === 'string') {
+          // Direct string format like "bendrucker/smallest"
+          url = `https://github.com/${repository}`;
+        } else if (typeof repository === 'object' && repository.url) {
+          // Object format with a URL field
+          url = repository.url;
+        }
+
+        if (!url) {
+          console.error('Error extracting package.json:');
+          res.status(400).json({ message: 'Error fetching URL from Package' });
+          return;
+        }
+
+        // Parse the URL (if needed to get specific parts like owner and repo)
+        [owner, repo] = await parseURL(url);
+
+      } catch (error) {
+        console.error('Error extracting package.json:', error);
+        res.status(400).json({ message: 'Error fetching URL from Package' });
+        return;
       }
     } else if (isUpdateFromURL) {
       // Fetch package from URL
       try {
         const resolvedURL = await resolveURL(URL);
-        const {owner, repo} = await getOwnerAndRepoFromURL(resolvedURL);
+        const ownerRepo = await getOwnerAndRepoFromURL(resolvedURL);
+        owner = ownerRepo.owner;
+        repo = ownerRepo.repo;
+        console.log(owner, repo);
 
         const repoInfoUrl = `https://api.github.com/repos/${owner}/${repo}`;
         const repoInfoResponse = await axios.get(repoInfoUrl);
@@ -220,23 +280,19 @@ router.post('/package/:id', async (req, res) => {
         axiosResponse = await axios.get(githubZipUrl, { responseType: 'arraybuffer' });
         packageBuffer = Buffer.from(axiosResponse.data);
 
-        // Attempt to fetch README
-        try {
-          const readmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/README.md`;
-          const readmeResponse = await axios.get(readmeUrl);
-          if (readmeResponse && readmeResponse.status === 200) {
-            readmeContent = readmeResponse.data;
-          }
-        } catch {
-          // try lowercase readme.md
+        // Fetch README file
+        let readmeResponse = null;
+        const readmeCandidates = ['README.md', 'Readme.md', 'readme.md', 'readme.txt', 'README.txt', 'Readme.txt', 'README', 'Readme', 'readme'];
+        for (const candidate of readmeCandidates) {
           try {
-            const readmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/readme.md`;
-            const readmeResponse = await axios.get(readmeUrl);
+            const readmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${candidate}`;
+            readmeResponse = await axios.get(readmeUrl);
             if (readmeResponse && readmeResponse.status === 200) {
               readmeContent = readmeResponse.data;
+              break; // Stop once we find a valid README
             }
-          } catch {
-            // no readme found
+          } catch (error) {
+            // Ignore errors and try the next candidate
           }
         }
       } catch (error) {
@@ -252,14 +308,26 @@ router.post('/package/:id', async (req, res) => {
 
     // If debloat requested
     if (debloat === true) {
-      packageBuffer = await processPackage(packageBuffer);
+      let newPackageBuffer = null;
+      try {
+        newPackageBuffer = await processPackage(packageBuffer);
+        packageBuffer = newPackageBuffer;
+      } catch (error) {
+        console.error('Error during debloating:', error);
+      }
     }
 
     // Rate the package
-    const rating = await ratePackage(packageBuffer);
-    if (rating < 0.5) {
-      res.status(424).json({ message: 'Package is not uploaded due to the disqualified rating.' });
-      return;
+    console.log('Rating package:', owner, repo);
+    const ratings: number[] = await ratePackage(owner, repo);
+    console.log('Ratings:', ratings);
+    for (const rating of ratings) {
+      if (rating < 0.5) {
+        res.status(424).json({
+          message: 'Package is not uploaded due to the disqualified rating.',
+        });
+        return;
+      }
     }
 
     // Insert the new version into the database

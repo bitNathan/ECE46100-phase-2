@@ -2,10 +2,26 @@
 import { calculateRateMetrics } from '../metrics/rate_metrics';
 import { getPullRequestCodeReview } from '../metrics/pull_request_code_review';
 import { getDependencies } from '../dependency_parser';
+<<<<<<< HEAD
+=======
+import { getBusFactor } from '../metrics/bus_factor';
+import { getCorrectness } from '../metrics/correctness';
+import { calculateTotalTimeFromRepo } from '../metrics/ramp_up_metric';
+import { getResponsive } from '../metrics/responsive_maintainer';
+import { getLicense } from '../metrics/license';
+>>>>>>> main
 
 // Mock all dependencies
 jest.mock('../metrics/pull_request_code_review');
 jest.mock('../dependency_parser');
+<<<<<<< HEAD
+=======
+jest.mock('../metrics/bus_factor');
+jest.mock('../metrics/correctness');
+jest.mock('../metrics/ramp_up_metric');
+jest.mock('../metrics/responsive_maintainer');
+jest.mock('../metrics/license');
+>>>>>>> main
 
 describe('Rate Metrics Calculation', () => {
   beforeEach(() => {
